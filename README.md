@@ -23,6 +23,7 @@ dev.send('FORM3; OUTPDTRC?')
 spec = dev.read_block('f8')
 ```
 
+More detailed examples are available in the library/ directory.
 
 
 ### How do I use it? ###
