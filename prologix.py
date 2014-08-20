@@ -1,3 +1,8 @@
+"""
+TELEPYTHIC -- a python interface to test equipment
+Copyright 2014 by Martijn Jasperse
+https://bitbucket.org/martijnj/telepythic
+"""
 from tcp import TCPInterface
 
 class PrologixInterface(TCPInterface):

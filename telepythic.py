@@ -1,3 +1,8 @@
+"""
+TELEPYTHIC -- a python interface to test equipment
+Copyright 2014 by Martijn Jasperse
+https://bitbucket.org/martijnj/telepythic
+"""
 import numpy as np
 
 class TelepythicDevice:
