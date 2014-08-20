@@ -31,6 +31,7 @@ More detailed examples are available in the library/ directory.
 The library can either be used by instantiating a TelepythicDevice and using it directly in a script (e.g. library/sr770.py), or by creating a subclass (e.g. library/tekscope.py).
 
 The constructor takes an interface object, which is any class that provides the following functions:
+
 * write(data), write the binary string "data" to the device
 * read(), read an ASCII response string from the device
 * read_raw(size), read exactly "size" bytes back from the device
