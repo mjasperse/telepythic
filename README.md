@@ -1,6 +1,6 @@
 # Telepythic #
 
-This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) interfaces. It's intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
+This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) interfaces. Its intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
 
 Classes are provided for TCP communication (e.g. Tektronix oscilloscopes), and GPIB communication via a Prologix ethernet-GPIB bridge. Direct interface with VISA drivers is possible through the pyvisa project. The simple read/write/ask interface means devices do not need to know the details of the underlying interface, meaning interfaces can be easily changed.
 
@@ -37,3 +37,5 @@ The constructor takes an interface object, which is any class that provides the 
 * read_raw(size), read exactly "size" bytes back from the device
 
 This simple interface is compatible with other driver projects, such as pyvisa.
+
+You can then "write" commands to the device, and "read" the response to queries. A convenience function "ask" is provided for the combination of write-then-read. Another convenience function "query" is provided to type-cast the response as a number or string, and will return a dictionary of values if a list of queries is provided. See telepythic.py for more information.
