@@ -2,11 +2,11 @@
 
 This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) interfaces. It's intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
 
-Classes are provided for TCP communication (e.g. Tektronix oscilloscopes), and GPIB communication via a Prologix ethernet &harr; GPIB bridge. Direct interface with VISA drivers is possible through the pyvisa project. The simple read/write/ask interface means devices do not need to know the details of the underlying interface, meaning interfaces can be easily changed.
+Classes are provided for TCP communication (e.g. Tektronix oscilloscopes), and GPIB communication via a Prologix ethernet-GPIB bridge. Direct interface with VISA drivers is possible through the pyvisa project. The simple read/write/ask interface means devices do not need to know the details of the underlying interface, meaning interfaces can be easily changed.
 
 Telepythic takes care of end-of-message, end-of-input, and buffering considerations, to provide a reliable and simple means of communication.
 
-This example shows how to download an entire trace from an HP4395 vector-network analyser, using an ethernet &harr; GPIB interface, in binary mode, taking less than a second:
+This example shows how to download an entire trace from an HP4395 vector-network analyser, using an ethernet-GPIB interface, in binary mode, taking less than a second:
 
 
 ```
