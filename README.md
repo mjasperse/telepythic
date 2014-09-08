@@ -24,12 +24,13 @@ spec = dev.read_block('f8')
 ```
 
 The following examples are included in the library/ directory:
-   * Agilent 86140B Optical Spectrum Analyser
-   * Ando AQ6315 Optical Spectrum Analyser
-   * Galil RIO Programmable Logic Controller
-   * HP 4395A Vector Network Analyser
-   * Stanford SR770 FFT Network Analyser
-   * TekTronix Digital Oscilloscopes
+
+* Agilent 86140B Optical Spectrum Analyser
+* Ando AQ6315 Optical Spectrum Analyser
+* Galil RIO Programmable Logic Controller
+* HP 4395A Vector Network Analyser
+* Stanford SR770 FFT Network Analyser
+* TekTronix Digital Oscilloscopes
 
    
 ### How do I use it? ###
