@@ -1,6 +1,6 @@
 # Telepythic #
 
-This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) interfaces. Its intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
+This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) or telnet interfaces. Its intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
 
 Classes are provided for TCP communication (e.g. Tektronix oscilloscopes), and GPIB communication via a Prologix ethernet-GPIB bridge. Direct interface with VISA drivers is possible through the pyvisa project. The simple read/write/ask interface means devices do not need to know the details of the underlying interface, meaning interfaces can be easily changed.
 
@@ -23,9 +23,15 @@ dev.send('FORM3; OUTPDTRC?')
 spec = dev.read_block('f8')
 ```
 
-More detailed examples are available in the library/ directory.
+The following examples are included in the library/ directory:
+   * Agilent 86140B Optical Spectrum Analyser
+   * Ando AQ6315 Optical Spectrum Analyser
+   * Galil RIO Programmable Logic Controller
+   * HP 4395A Vector Network Analyser
+   * Stanford SR770 FFT Network Analyser
+   * TekTronix Digital Oscilloscopes
 
-
+   
 ### How do I use it? ###
 
 The library can either be used by instantiating a TelepythicDevice and using it directly in a script (e.g. library/sr770.py), or by creating a subclass (e.g. library/tekscope.py).
