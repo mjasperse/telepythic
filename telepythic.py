@@ -65,10 +65,10 @@ class TelepythicDevice:
             return self.dev.read_raw(size)
     
     def query(self, query):
-        """A helper function that asks "query" and parses the response. If the query does not end with "?", it is appended. Query can be iterable, in which case a dictionary of the responses is returned.
+        """A helper function that asks "query" and returns the response.
         """
         if isinstance(query,str):
-            return parse_reply(query+('' if query[-1] == '?' else '?'))
+            return parse_reply(query)
         else:
             return { q: self.query(q) for q in query }
     
