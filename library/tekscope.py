@@ -3,8 +3,13 @@ from telepythic import TelepythicDevice, TelnetInterface
 class TekScope(TelepythicDevice):
     def __init__(self,interface,**kwargs):
         if isinstance(interface,str):
-            interface = TelnetInterface(host=interface,port=4000,eom='\n',prompt='> ',**kwargs)
-        TelepythicDevice.__init__(interface)
+            interface = TelnetInterface(
+                host = interface,
+                port = 4000,
+                eom = '\n',
+                prompt = '> ',
+                **kwargs)
+        TelepythicDevice.__init__(self,interface)
         # turn off verbose modes
         self.write('VERB 0; HEAD 0')
         

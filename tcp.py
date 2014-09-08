@@ -10,7 +10,7 @@ class TCPInterface:
         Connect to the specified TCP device
         
         Keyword arguments:
-        host    -- Host name or IP address of device to connect to
+        host    -- Host name or IP address of device to connect to. Can be an integer, in which case the local machine's IP is used, with the last octet replaced.
         port    -- Port to connect to on host
         timeout -- Communication timeout, in seconds (default: 1)
         eom     -- "End-Of-Message" string, appended to outgoing messages if not present (default: \r\n)
@@ -82,8 +82,8 @@ class TCPInterface:
         return len(msg)
     
 import re
-class TelnetInterface:
-    def __init__(self, host, port, timeout=1, eom='\n', prompt='> '):
+class TelnetInterface(TCPInterface):
+    def __init__(self, host, port=23, timeout=1, eom='\n', prompt='> ', initial=None):
         """
         Create a Telnet-style connection to the specified device. Telnet connections are TCP connections where the device emits a ready-for-input string ("prompt") that needs to be removed from responses.
         
@@ -91,11 +91,19 @@ class TelnetInterface:
         """
         TCPInterface.__init__(self,host,port,timeout=timeout,eom=eom,trim=False)
         # compile a regex that looks for any number of prompt strings
-        self.prompt = prompt
-        self.rex = re.compile('([\r\n ]*%s)+'%prompt)
-        # wait for the ready prompt
+        if hasattr(prompt,'__iter__'):
+            prompt = '(' + '|'.join([re.escape(s) for s in prompt]) + ')'
+        else:
+            prompt = re.escape(s)
+        self.re_end = re.compile(prompt+'$')
+        self.re_multi = re.compile('([\r\n]*'+prompt+')+')
+        if initial is not None:
+            self.write(initial)
         try:
-            while re.search(prompt+'$', self.sock.recv(self.buffer)) is None:
+            # wait for the ready prompt
+            l = self.sock.recv(self.buffer)
+            while self.re_end.search(l) is None:
+                # toss out the initial hello message
                 pass
         except socket.timeout:
             raise RuntimeError('Device did not return a ready prompt')
@@ -106,10 +114,13 @@ class TelnetInterface:
         # read until we get something other than a prompt statement
         while len(data) == 0:
             data = TCPInterface.read(self)
-            M = self.rex.match(data)
+            # print repr(data)
+            # starts any prompt statements?
+            M = self.re_multi.match(data)
             if M is not None: data = data[M.end()+1:]
-        # we have something, drop the prompt if it ends with one
-        if data.endswith(self.prompt): data = data[:-len(self.prompt)].rstrip()
+        # drop the prompt at the end
+        M = self.re_end.search(data)
+        if M is not None: data = data[:M.start()].rstrip()
         return data
         
     def flush(self,timeout=0.25):
