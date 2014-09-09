@@ -94,17 +94,17 @@ class TelnetInterface(TCPInterface):
         if hasattr(prompt,'__iter__'):
             prompt = '(' + '|'.join([re.escape(s) for s in prompt]) + ')'
         else:
-            prompt = re.escape(s)
+            prompt = re.escape(prompt)
         self.re_end = re.compile(prompt+'$')
         self.re_multi = re.compile('([\r\n]*'+prompt+')+')
         if initial is not None:
             self.write(initial)
         try:
             # wait for the ready prompt
-            l = self.sock.recv(self.buffer)
-            while self.re_end.search(l) is None:
-                # toss out the initial hello message
-                pass
+            while 1:
+                l = self.sock.recv(self.buffer)
+                if self.re_end.search(l) is not None:
+                    break
         except socket.timeout:
             raise RuntimeError('Device did not return a ready prompt')
 
@@ -112,15 +112,16 @@ class TelnetInterface(TCPInterface):
         """Read data from the socket, until the ready-for-input prompt is received. The prompt string is removed from the response."""
         data = ''
         # read until we get something other than a prompt statement
-        while len(data) == 0:
-            data = TCPInterface.read(self)
-            # print repr(data)
+        while 1:
+            data += TCPInterface.read(self)
             # starts any prompt statements?
             M = self.re_multi.match(data)
             if M is not None: data = data[M.end()+1:]
-        # drop the prompt at the end
-        M = self.re_end.search(data)
-        if M is not None: data = data[:M.start()].rstrip()
+            # drop the prompt at the end
+            M = self.re_end.search(data)
+            if M is not None:
+                data = data[:M.start()].rstrip()
+                break
         return data
         
     def flush(self,timeout=0.25):
