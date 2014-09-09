@@ -1,4 +1,5 @@
 from telepythic import TelepythicDevice, TelnetInterface
+import numpy as np
 
 class TekScope(TelepythicDevice):
     def __init__(self,interface,**kwargs):
@@ -16,12 +17,14 @@ class TekScope(TelepythicDevice):
     def waveform(self,channel=None):
         # select channel if required
         if channel is not None:
-			if isinstance(channel,int): channel = 'CH%i'%channel
-			self.write('DAT:SOU '+channel)
+            if isinstance(channel,int) or channel in '1234':
+                channel = 'CH'+str(channel)
+            self.write('DAT:SOU '+channel)
         # configure channel for output
         self.write('WFMO:ENC BINARY; BN_F RI; BYT_N 2; BYT_O LSB')
         # create a dict of all the settings
-        wfmo = self.ask('WFMO?')
+        wfmo_dat = self.ask('WFMO?')
+        
         wfmo_keys = [
             'BYT_NR',   # data width for the outgoing waveform
             'BIT_NR',   # bits per data point
@@ -47,7 +50,11 @@ class TekScope(TelepythicDevice):
             except: pass
             if x[0] == '"': return x[1:x.rfind('"')]
             return x
-        wfmo_vals = map(parse, wfmo.split(';'))
+        wfmo_vals = map(parse, wfmo_dat.split(';'))
+        
+        # if waveform is not displayed, incomplete list is returned
+        if len(wfmo_vals) < len(wfmo_keys): return None
+        
         wfmo = dict(zip(wfmo_keys,wfmo_vals))
         npts = wfmo['NR_PT']
         assert npts > 0
