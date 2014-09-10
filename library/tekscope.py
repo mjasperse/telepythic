@@ -23,26 +23,10 @@ class TekScope(TelepythicDevice):
         # configure channel for output
         self.write('WFMO:ENC BINARY; BN_F RI; BYT_N 2; BYT_O LSB')
         # create a dict of all the settings
-        wfmo_dat = self.ask('WFMO?')
+        wfmo = self.ask('HEAD 1; WFMO?')
+        assert wfmo.startswith(':WFMO:')
+        wfmo_vals = wfmo[6:].split(';')
         
-        wfmo_keys = [
-            'BYT_NR',   # data width for the outgoing waveform
-            'BIT_NR',   # bits per data point
-            'ENCDG',    # encoding (ASCII or binary)
-            'BN_FMT',   # signed-ness of binary data
-            'BYT_OR',   # endian-ness (LSB or MSB first)
-            'WFID',     # acquisition parameters 
-            'NR_PT',    # number of points
-            'PT_FMT',   # point format: {ENV: min/max pairs, Y: single points}
-            'XUNIT',    # horizontal units
-            'XINCR',    # horizontal increment
-            'XZERO',    # time of the first point
-            'PT_OFF',   # is currently displayed?
-            'YUNIT',    # vertical units
-            'YMULT',    # vertical scale factor per digitizing level
-            'YOFF',     # vertical position in digitizing levels
-            'YZERO'     # vertical offset
-        ]
         def parse(x):
             try:    return int(x)
             except: pass
@@ -50,22 +34,22 @@ class TekScope(TelepythicDevice):
             except: pass
             if x[0] == '"': return x[1:x.rfind('"')]
             return x
-        wfmo_vals = map(parse, wfmo_dat.split(';'))
         
-        # if waveform is not displayed, incomplete list is returned
-        if len(wfmo_vals) < len(wfmo_keys): return None
+        wfmo = {}
+        for x in wfmo_vals:
+            name, val = x.split(' ',1)
+            wfmo[name] = parse(val)
         
-        wfmo = dict(zip(wfmo_keys,wfmo_vals))
-        npts = wfmo['NR_PT']
+        npts = wfmo['NR_P']
         assert npts > 0
         # flush anything waiting to be read
         self.flush()
         # get the raw curve data
-        data = self.write('CURV?')
+        data = self.write('HEAD 0; CURV?')
         Y = self.read_block(format='<i2')
         # transform the data
-        T = wfmo['XINCR']*np.arange(0,npts) + wfmo['XZERO']
-        Y = wfmo['YMULT']*(Y - wfmo['YOFF']) + wfmo['YZERO']
+        T = wfmo['XIN']*np.arange(0,npts) + wfmo['XZE']
+        Y = wfmo['YMU']*(Y - wfmo['YOF']) + wfmo['YZE']
         return wfmo, T, Y
 
     def lock(self,locked=True):
