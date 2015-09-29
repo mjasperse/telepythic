@@ -7,11 +7,7 @@ Classes are provided for TCP communication (e.g. Tektronix oscilloscopes), and G
 Telepythic takes care of end-of-message, end-of-input, and buffering considerations, to provide a reliable and simple means of communication.
 
 This example shows how to download an entire trace from an HP4395 vector-network analyser, using an ethernet-GPIB interface, in binary mode, taking less than a second:
-
-
-```
-#!python
-
+```python
 # connect to a prologix GPIB bridge
 bridge = PrologixInterface(gpib=17,host=175)
 # create a generic device instance
@@ -46,3 +42,26 @@ The constructor takes an interface object, which is any class that provides the 
 This simple interface is compatible with other driver projects, such as pyvisa.
 
 You can then "write" commands to the device, and "read" the response to queries. A convenience function "ask" is provided for the combination of write-then-read. Another convenience function "query" is provided to type-cast the response as a number or string, and will return a dictionary of values if a list of queries is provided. See telepythic.py for more information.
+
+
+
+### Can I use pyvisa? ###
+
+**Absolutely!** The following is an example of how to use `pyvisa` as the back-end driver for `telepythic`, which communicates with a USB VISA device:
+```python
+import pyvisa
+import telepythic
+
+# query all available VISA devices
+rm = pyvisa.ResourceManager()
+# enumerate the USB devices
+usbs = rm.list_resources('USB?*::INSTR')
+# check there's only one
+assert len(usbs) == 1
+
+# open the device
+instr = rm.open_resource(usbs[0])
+instr.timeout = 1000
+# establish communications
+dev = telepythic.TelepythicDevice(instr)
+```
