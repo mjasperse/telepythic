@@ -14,6 +14,7 @@ class TelepythicDevice:
             read(), read_raw(), write()
         """
         self.dev = interface
+        self.bstream = getattr(interface,'bstream',True) and not hasattr(interface,'visalib')
     
     def __del__(self):
         """Destructor, attempts to close connection to the device"""
@@ -33,6 +34,7 @@ class TelepythicDevice:
     
     def read_block(self,format=None):
         """Read a GPIB-style block of binary data from the device. If "format" is specified, the data is reinterpreted as a 1D numpy array with the corresponding dtype.
+		If the number of points is known in advance, it is checked
         
         Block data is of the form:
             #    - the ASCII character "#"
@@ -40,14 +42,24 @@ class TelepythicDevice:
             M..M - number of bytes in the following data string (N-digits of ASCII)
             X..X - the actual data string
         """
-        head = self.read_raw(2)
-        if head[0] != '#': raise TypeError('Not a binary array')
-        len = int(self.read_raw(int(head[1])))
-        data = self.read_raw(len)
-        if format is None: return data
+        if not self.bstream:
+        	data = self.read_raw(None)
+        	head = data[:2]
+        	assert head[0] == '#', 'Not a binary block array'
+        	hlen = int(data[1])
+        	dlen = int(data[2:2+hlen])
+        	assert len(data) - (2+hlen+dlen) <= 2
+        	data = data[2+hlen:2+hlen+dlen]
+        else:
+        	head = self.read_raw(2)
+        	assert head[0] == '#', 'Not a binary block array'
+        	dlen = int(self.read_raw(int(head[1])))
+        	data = self.read_raw(dlen)
+        if format is None:
+        	return data
         return np.fromstring(data,dtype=format)
     
-    def parse_reply(self, reply):
+    def parse_reply(self, x):
         """Interpret the reply string and return an appropriately type-cast value"""
         try:    return int(x)
         except: pass
@@ -68,7 +80,7 @@ class TelepythicDevice:
         """A helper function that asks "query" and returns the response.
         """
         if isinstance(query,str):
-            return parse_reply(query)
+            return self.parse_reply(self.ask(query))
         else:
             return { q: self.query(q) for q in query }
     
