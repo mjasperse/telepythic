@@ -1,10 +1,10 @@
 from setuptools import setup
 setup(
     name = "telepythic",
-    version = "1.1",
+    version = "1.2",
     packages = [ 'telepythic', 'telepythic.library' ],
     package_dir = { 'telepythic':'' },
-    package_data = { '': ['*.txt','*.md'] },
+    package_data = { '': ['LICENSE.txt','README.md'] },
     
     # metadata for upload to PyPI
     author = "Martijn Jasperse",
