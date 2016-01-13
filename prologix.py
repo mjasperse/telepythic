@@ -20,7 +20,9 @@ class PrologixInterface(TCPInterface):
         # connect to prologix unit (prologix itself requires '\n' eom termination)
         TCPInterface.__init__(self,host,port,timeout,eom='\n')
         # make sure it's what we expect
-        assert self.ask('++ver\n').startswith('Prologix GPIB')
+        self.write('++ver\n')
+        if not self.read(True).startswith('Prologix GPIB'):
+            raise RuntimeError('Not a Prologix device')
         
         # set controller mode
         self.write('++mode 1\n')
@@ -50,16 +52,21 @@ class PrologixInterface(TCPInterface):
         try:    self.close()
         except: pass
         
-    def read(self):
+    def read(self,immediate=False):
+        """
+        Read data from the Prologix unit.
+        If the device was not configured in "auto" mode (see __init__), a "++read" command is issued.
+        To read a response to a Prologix query (starting with "++"), set immediate to True.
+        """
         # if we're not in auto mode, need to tell prologix to read
-        if not self.auto: self.write('++read eoi\n')
+        if not immediate and not self.auto: self.write('++read eoi\n')
         # pull from tcp
         return TCPInterface.read(self)
     
     def clear(self):            self.write('++clr\n')
-    def lock(self,locked=True):	self.write('++llo\n' if locked else '++loc\n')
+    def lock(self,locked=True): self.write('++llo\n' if locked else '++loc\n')
     def local(self):            self.write('++loc\n')
     def reset(self):            self.write('++rst\n')
-    def poll(self):             return int(self.ask('++spoll\n'))
-    def srq(self):              return int(self.ask('++srq\n')) != 0
+    def poll(self):             self.write('++spoll\n'); return int(self.read(True))
+    def srq(self):              self.write('++seq\n'); return int(self.read(True))
 
