@@ -61,6 +61,7 @@ class TelepythicDevice:
     
     def parse_reply(self, x):
         """Interpret the reply string and return an appropriately type-cast value"""
+        x = x.strip()
         try:    return int(x)
         except: pass
         try:    return float(x)
@@ -80,6 +81,8 @@ class TelepythicDevice:
         """A helper function that asks "query" and returns the response.
         """
         if isinstance(query,str):
+            # ensure query string contains a query
+            if not '?' in query: query = query + '?'
             return self.parse_reply(self.ask(query))
         else:
             return { q: self.query(q) for q in query }
