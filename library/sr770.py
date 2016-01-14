@@ -35,7 +35,7 @@ disp = dev.ask('DISP?'+trace)
 # check averaging
 if dev.ask('AVGO?'):
     print 'Averaging = ON'
-    navg = dev.sendrecv('NAVG?')
+    navg = dev.ask('NAVG?')
     print 'Number of averages =', navg
 else:
     navg = 0
