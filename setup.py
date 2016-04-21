@@ -1,7 +1,7 @@
 from setuptools import setup
 setup(
     name = "telepythic",
-    version = "1.2",
+    version = "1.3",
     packages = [ 'telepythic', 'telepythic.library' ],
     package_dir = { 'telepythic':'' },
     package_data = { '': ['LICENSE.txt','README.md'] },
