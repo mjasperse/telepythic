@@ -1,9 +1,14 @@
+"""
+GALIL MOTION CONTROLLERS
+Connects with the Digital Motion Controllers (DMCs) from Galil and provides a basic interface, including basic queries.
+
+References: http://www.galilmc.com/support/manuals/com47xxx/index.html
+            http://www.galilmc.com/support/manuals/man47100.pdf
+"""
+
 from telepythic import TelepythicDevice, TelnetInterface
 from struct import unpack
 import re
-
-# http://www.galilmc.com/support/manuals/com47xxx/index.html
-# http://www.galilmc.com/support/manuals/man47100.pdf
 
 class GalilRIO(TelepythicDevice):
     def __init__(self,interface,**kwargs):

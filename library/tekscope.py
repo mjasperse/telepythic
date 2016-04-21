@@ -1,3 +1,10 @@
+"""
+TEKTRONIX OSCILLOSCOPE INTERFACE
+Connects to TekTronix TDS, DPO and MSO oscilloscopes over USB or ethernet, and provides a simple interface to download data from the scope.
+
+Programming guides: http://www.tek.com/search/apachesolr_search/programmer?filters=type%3A%28%22manual%22%29%20tid%3A1012
+"""
+
 from telepythic import TelepythicDevice
 import numpy as np
 
@@ -25,7 +32,7 @@ class TekScope(TelepythicDevice):
         self.write('DAT:ENC RIB; WID 2')
         # create a dict of all the settings
         wfmo = self.ask('HEAD 1; WFMPR?')
-        assert wfmo.startswith(':WFMPR:')
+        assert wfmo.startswith(':WFMPR:'), 'Unknown response header'
         wfmo_vals = wfmo[6:].split(';')
         
         def parse(x):
@@ -50,7 +57,7 @@ class TekScope(TelepythicDevice):
         self.write('HEAD 0')
         self.write('CURV?')
         Y = self.read_block(format=fmt)
-        assert len(Y) == npts
+        assert len(Y) == npts, 'Incorrect response size'
         # transform the data
         T = wfmo['XIN']*np.arange(0,npts) + wfmo['XZE']
         Y = wfmo['YMU']*(Y - wfmo['YOF']) + wfmo['YZE']

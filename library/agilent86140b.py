@@ -9,8 +9,9 @@ Programming guide: http://cp.literature.agilent.com/litweb/pdf/86140-90069.pdf
 """
 
 from telepythic import TelepythicDevice, PrologixInterface
-import sys, time
 import numpy as np
+import sys
+import time
 
 # connect to device
 bridge = PrologixInterface(gpib=23,host=177)
@@ -58,12 +59,12 @@ if len(sys.argv) > 1:
         np.savetxt(f, M, '%g', ', ', '\n')
 
 # Make a plot:
-from pylab import *
-clf()
+import pylab as pyl
+pyl.clf()
 for i,XY in tr.items():
-    plot(XY[:,0],XY[:,1],label='TR'+i)
-legend()
-xlabel('$\lambda$ (nm)')
-axis('tight')
-grid(True)
-show()
+    pyl.plot(XY[:,0],XY[:,1],label='TR'+i)
+pyl.legend()
+pyl.xlabel('$\lambda$ (nm)')
+pyl.axis('tight')
+pyl.grid(True)
+pyl.show()

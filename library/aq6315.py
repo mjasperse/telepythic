@@ -57,4 +57,4 @@ if len(sys.argv) > 1:
 # close connection to prologix
 dev.close()
 # show graph
-show()
+pylab.show()

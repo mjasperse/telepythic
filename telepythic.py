@@ -77,8 +77,7 @@ class TelepythicDevice:
             return self.dev.read_raw(size)
     
     def query(self, query):
-        """A helper function that asks "query" and returns the response.
-        """
+        """A helper function that asks "query" and returns the response."""
         if isinstance(query,str):
             return self.parse_reply(self.ask(query))
         else:
