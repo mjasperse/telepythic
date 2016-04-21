@@ -108,3 +108,22 @@ class TelepythicDevice:
             self.dev.lock(False)
         if hasattr(self.dev,"close"):
             self.dev.close()
+
+
+def pyvisa_connect(resource,timeout=1000):
+	"""Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards."""
+	import pyvisa
+	# query all available VISA devices
+	rm = pyvisa.ResourceManager()
+	# enumerate the USB devices
+	devs = rm.list_resources(resource)
+	# check there's only one
+	if len(devs) == 0:
+		raise RuntimeError("No VISA devices found")
+	elif len(devs) > 2:
+		raise RuntimeError("Specified VISA resource '%s' describes %i devices"%(resource,len(devs)))
+	
+	# open the device
+	instr = rm.open_resource(devs[0])
+	instr.timeout = timeout
+	return instr
