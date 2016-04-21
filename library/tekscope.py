@@ -22,10 +22,10 @@ class TekScope(TelepythicDevice):
                 channel = 'CH'+str(channel)
             self.write('DAT:SOU '+channel)
         # configure channel for output
-        self.write('WFMP:ENC BINARY; BN_F RI; BYT_N 2')
+        self.write('DAT:ENC RIB; WID 2')
         # create a dict of all the settings
-        wfmo = self.ask('HEAD 1; WFMP?')
-        assert wfmo.startswith(':WFMP:')
+        wfmo = self.ask('HEAD 1; WFMPR?')
+        assert wfmo.startswith(':WFMPR:')
         wfmo_vals = wfmo[6:].split(';')
         
         def parse(x):
