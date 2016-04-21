@@ -33,7 +33,7 @@ else:
     navg = 0
 
 tr = {}
-dev.send('FORM REAL,32')
+dev.write('FORM REAL,32')
 for i in 'ABCDEF':
     if dev.ask('DISP:TRAC:STAT? TR'+i):
         print 'Downloading trace', i
