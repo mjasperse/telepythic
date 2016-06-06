@@ -22,7 +22,7 @@ class TelepythicDevice:
         except: pass
     
     def id(self,expect=None,match_case=True):
-        """Return the response to the *IDN? query. To ensure you're communicating with the device you expect, specify an "expect" string which is matched against the start of the IDN response"""
+        """Return the response to the *IDN? query. To ensure you're communicating with the device you expect, specify an "expect" string which is matched against the _start_ of the IDN response"""
         id = self.ask('*IDN?')
         if expect is not None:
             if not match_case:
@@ -34,23 +34,27 @@ class TelepythicDevice:
     
     def read_block(self,format=None):
         """Read a GPIB-style block of binary data from the device. If "format" is specified, the data is reinterpreted as a 1D numpy array with the corresponding dtype.
-		If the number of points is known in advance, it is checked
         
-        Block data is of the form:
+        GPIB block data is a binary stream of the form:
             #    - the ASCII character "#"
             N    - the size of following length string (single ASCII digit)
             M..M - number of bytes in the following data string (N-digits of ASCII)
-            X..X - the actual data string
+            X..X - the actual data string (M bytes of binary data)
         """
         if not self.bstream:
+            # NB: When using pyvisa, multiple sequential read_raw() commands are not permitted to
+            # parse *part* of a response. If the "size" argument does not match the length of the
+            # response (as defined by the EOM), an error is raised.
+            # Hence we must read the *entire* raw response in, then parse it in sections.
         	data = self.read_raw(None)
         	head = data[:2]
         	assert head[0] == '#', 'Not a binary block array'
         	hlen = int(data[1])
         	dlen = int(data[2:2+hlen])
-        	assert len(data) - (2+hlen+dlen) <= 2
+        	assert len(data) - (2+hlen+dlen) <= 2, 'Invalid block length'
         	data = data[2+hlen:2+hlen+dlen]
         else:
+            # We don't know in advance how long the response is so consume piece by piece
         	head = self.read_raw(2)
         	assert head[0] == '#', 'Not a binary block array'
         	dlen = int(self.read_raw(int(head[1])))
@@ -70,7 +74,7 @@ class TelepythicDevice:
         return x
     
     def ask(self, query, size=None):
-        """A helper function that writes the command "query" and reads the reply. If "size" is not None, the response is assumed to be a binary string of that length."""
+        """A helper function that writes the command "query" and reads the reply. If "size" is not None, the response is assumed to be a binary string of that length"""
         self.dev.write(query)
         if size is None:
             return self.dev.read()
@@ -78,7 +82,7 @@ class TelepythicDevice:
             return self.dev.read_raw(size)
     
     def query(self, query):
-        """A helper function that asks "query" and returns the response."""
+        """A helper function that asks "query" and returns the response. "query" can be a vector, in which case a dictionary of responses is returned."""
         if isinstance(query,str):
             # ensure query string contains a query
             if not '?' in query: query = query + '?'
@@ -87,6 +91,7 @@ class TelepythicDevice:
             return { q: self.query(q) for q in query }
     
     def read(self):
+        """Read data from the device (until EOM)"""
         return self.dev.read()
     
     def read_raw(self, size):
