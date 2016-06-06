@@ -15,7 +15,7 @@ dev = TelepythicDevice(bridge)
 # make sure the device is connect and identifies correctly
 id = dev.id(expect="HEWLETT-PACKARD,4395A")
 # download spectrum in 64-bit mode
-dev.send('FORM3; OUTPDTRC?')
+dev.write('FORM3; OUTPDTRC?')
 spec = dev.read_block('f8')
 ```
 
@@ -31,17 +31,21 @@ The following examples are included in the library/ directory:
    
 ### How do I use it? ###
 
-The library can either be used by instantiating a TelepythicDevice and using it directly in a script (e.g. library/sr770.py), or by creating a subclass (e.g. library/tekscope.py).
+The library can either be used by instantiating a `TelepythicDevice` and using it directly in a script (e.g. library/sr770.py), or by creating a subclass (e.g. library/tekscope.py) that provides wrapper functionality.
 
-The constructor takes an interface object, which is any class that provides the following functions:
+The device constructor takes an 'interface' object, which is any class that provides the following functions:
 
-* write(data), write the binary string "data" to the device
-* read(), read an ASCII response string from the device
-* read_raw(size), read exactly "size" bytes back from the device
+* `write(data)`, write the binary string "data" to the device
+* `read()`, read an ASCII response string from the device
+* `read_raw(size)`, read exactly "size" bytes back from the device
 
-This simple interface is compatible with other driver projects, such as pyvisa.
+This simple interface is compatible with other driver projects, such as pyvisa (see below).
 
-You can then "write" commands to the device, and "read" the response to queries. A convenience function "ask" is provided for the combination of write-then-read. Another convenience function "query" is provided to type-cast the response as a number or string, and will return a dictionary of values if a list of queries is provided. See telepythic.py for more information.
+You can then "write" commands to the device, and "read" the response to queries. A convenience function "ask" is provided for the combination of write-then-read.
+
+Another convenience function "query" is provided to type-cast the response as a number or string, and will return a dictionary of values if a list of queries is provided.
+
+See `telepythic.py` for more information.
 
 
 
