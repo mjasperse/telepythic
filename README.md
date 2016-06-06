@@ -47,21 +47,17 @@ You can then "write" commands to the device, and "read" the response to queries.
 
 ### Can I use pyvisa? ###
 
-**Absolutely!** The following is an example of how to use `pyvisa` as the back-end driver for `telepythic`, which communicates with a USB VISA device:
+**Absolutely!** The excellent [pyvisa] module can be easily used as a back-end driver for `telepythic` to enable connection to any VISA-enabled device.
+The wrapper function `pyvisa_connect` is provided to simplify connecting to a single device based on its VISA identification string.
+
+For example, if there is only one USB instrument connected to the machine, connecting is as simple as
 ```python
-import pyvisa
 import telepythic
-
-# query all available VISA devices
-rm = pyvisa.ResourceManager()
-# enumerate the USB devices
-usbs = rm.list_resources('USB?*::INSTR')
-# check there's only one
-assert len(usbs) == 1
-
-# open the device
-instr = rm.open_resource(usbs[0])
-instr.timeout = 1000
-# establish communications
+instr = telepythic.pyvisa_connect('USB?*::INSTR')
 dev = telepythic.TelepythicDevice(instr)
+print dev.id()
 ```
+Note that if multiple USB instruments are connected, a more specific VISA string should be used (e.g. including manufacturer/model number).
+Otherwise the `pyvisa` resource manager should be used to iterate over the possible devices to find the one that you're after.
+
+[pyvisa]: http://pyvisa.readthedocs.io/
