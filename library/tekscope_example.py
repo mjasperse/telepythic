@@ -1,20 +1,27 @@
+"""
+TEKTRONIX OSCILLOSCOPE EXAMPLE
+Shows how to connect to a TekTronix oscilloscope over USB using pyvisa, and download all visible channels to an H5 file
+"""
 import telepythic
 from telepythic.library import tekscope
 
-# open the device
+# look for USB instrument (will fail if there is more than one)
 instr = telepythic.pyvisa_connect('USB?*::INSTR')
+# connect to the instrument as an oscilloscope
 scope = tekscope.TekScope(instr)
-print 'Connected', dev.id()
+print 'Connected', scope.id()
 
+##### download the channels #####
 import pylab as pyl
 import numpy as np
 import h5py
-
+# create a new h5 file with the data in it
 with h5py.File("scope.h5","w") as F:
-	for c,col in zip(['CH1','CH2','CH3','CH4','REFA','REFB'],'bgrkym'):
-		# check if this channel is visible
-		if int(scope.ask('SEL:%s?'%c)):
-			# download the data
+	# find out what channels this scope has
+	chans = scope.channels()
+	for ch,col in zip(chans,'bgrkym'):
+		# if the channel is enabled, download it
+		if chans[ch]:
 			print 'Downloading',c
 			wfmo, T, Y = scope.waveform(c)
 			# save it to the file
