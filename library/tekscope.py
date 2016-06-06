@@ -22,6 +22,23 @@ class TekScope(TelepythicDevice):
         # turn off verbose modes
         self.write('VERB 0; HEAD 0')
         
+    def channels(self):
+        # want to enable HEAD to get channel names as well
+        prev = self.ask('HEAD?')
+        self.write('HEAD 1')
+        # determine the device capabilities and enabled status
+        resp = self.ask('SEL?').rsplit(':',1)[1]
+        # reset HEAD
+        self.write('HEAD '+prev)
+        # create a dict from the response
+        vals = {}
+        for x in resp.split(';'):
+            name, val = x.rsplit(' ',1)
+            if name[0] == ':': name = name.rsplit(':',1)[1]
+            try:    vals[name] = bool(int(val))
+            except: continue
+        return vals
+
     def waveform(self,channel=None):
         # select channel if required
         if channel is not None:
@@ -30,10 +47,13 @@ class TekScope(TelepythicDevice):
             self.write('DAT:SOU '+channel)
         # configure channel for output
         self.write('DAT:ENC RIB; WID 2')
+        # want to enable HEAD for settings names
+        prev = self.ask('HEAD?')
+        self.write('HEAD 1')
         # create a dict of all the settings
-        wfmo = self.ask('HEAD 1; WFMPR?')
-        assert wfmo.startswith(':WFMPR:'), 'Unknown response header'
-        wfmo_vals = wfmo[6:].split(';')
+        wfmo = self.ask('WFMP?')
+        assert wfmo.startswith(':WFMP'), 'Unknown response header'
+        wfmo_vals = wfmo.rsplit(':',1)[1].split(';')
         
         def parse(x):
             try:    return int(x)
@@ -50,17 +70,19 @@ class TekScope(TelepythicDevice):
         fmt = ('>' if wfmo['BYT_O'] == 'MSB' else '<') + 'i' + str(wfmo['BYT_N'])
         npts = wfmo['NR_P']
         assert npts > 0
-		
+        
+        self.write('HEAD 0')
         # flush anything waiting to be read
         self.flush()
         # get the raw curve data
-        self.write('HEAD 0')
         self.write('CURV?')
         Y = self.read_block(format=fmt)
         assert len(Y) == npts, 'Incorrect response size'
         # transform the data
         T = wfmo['XIN']*np.arange(0,npts) + wfmo['XZE']
         Y = wfmo['YMU']*(Y - wfmo['YOF']) + wfmo['YZE']
+        # reset HEAD
+        self.write('HEAD '+prev)
         return wfmo, T, Y
 
     def lock(self,locked=True):
