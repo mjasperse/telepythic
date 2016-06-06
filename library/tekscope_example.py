@@ -9,7 +9,7 @@ from telepythic.library import tekscope
 instr = telepythic.pyvisa_connect('USB?*::INSTR')
 # connect to the instrument as an oscilloscope
 scope = tekscope.TekScope(instr)
-print 'Connected', scope.id()
+print 'Connected', scope.id().strip()
 
 ##### download the channels #####
 import pylab as pyl
@@ -22,10 +22,10 @@ with h5py.File("scope.h5","w") as F:
 	for ch,col in zip(chans,'bgrkym'):
 		# if the channel is enabled, download it
 		if chans[ch]:
-			print 'Downloading',c
-			wfmo, T, Y = scope.waveform(c)
+			print 'Downloading',ch
+			wfmo, T, Y = scope.waveform(ch)
 			# save it to the file
-			D = F.create_dataset(c,data=np.vstack([T,Y]).T)
+			D = F.create_dataset(ch,data=np.vstack([T,Y]).T)
 			D.attrs.update(wfmo)
 			# plot it
 			pyl.plot(T,Y,col)
