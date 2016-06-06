@@ -113,8 +113,9 @@ class TelepythicDevice:
             self.dev.close()
 
 
-def pyvisa_connect(resource,timeout=1000):
-	"""Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards."""
+def pyvisa_connect(resource,timeout=1):
+	"""Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards.
+	The VISA communications timeout is "timeout", specified in seconds."""
 	import pyvisa
 	# query all available VISA devices
 	rm = pyvisa.ResourceManager()
@@ -128,5 +129,5 @@ def pyvisa_connect(resource,timeout=1000):
 	
 	# open the device
 	instr = rm.open_resource(devs[0])
-	instr.timeout = timeout
+	instr.timeout = timeout*1000 #ms
 	return instr
