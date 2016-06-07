@@ -4,13 +4,16 @@ Copyright 2014 by Martijn Jasperse
 https://bitbucket.org/martijnj/telepythic
 """
 import socket, select
+from telepythic import ConnectionError
+
 class TCPInterface:
+    _protocol = 'TCP'
     def __init__(self, host, port, timeout=1, eom='\r\n', trim=True, buffer=1024):
         """
         Connect to the specified TCP device
         
         Keyword arguments:
-        host    -- Host name or IP address of device to connect to. Can be an integer, in which case the local machine's IP is used, with the last octet replaced.
+        host    -- Host name or IP address of device to connect to. Can be an integer, either specifying the IP as a 32-bit integer, or as the final octet of the IP.
         port    -- Port to connect to on host
         timeout -- Communication timeout, in seconds (default: 1)
         eom     -- "End-Of-Message" string, appended to outgoing messages if not present (default: \r\n)
@@ -18,34 +21,44 @@ class TCPInterface:
         buffer  -- TCP receive buffer chunk size (default: 1024)
         """
         if isinstance(host,int):
-            assert host >= 0 and host < 256
-            # get the local (default) ip address -- probably breaks on multiple interface machines
-            myaddr = socket.gethostbyname_ex('')[2][0]
-            # replace the last octet
-            host = myaddr.rsplit('.',1)[1] + str(host)
+            if host > 255:
+                # assume it's an IP specified in integer format
+                import struct
+                host = socket.inet_ntoa(struct.pack("!I",host))
+            else:
+                # assume it's the final octet of an IP
+                # get the local (default) ip address -- probably breaks on multiple interface machines
+                myaddr = socket.gethostbyname_ex('')[2][0]
+                # replace the last octet
+                host = myaddr.rsplit('.',1)[1] + str(host)
         # create a TCP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         self.sock.settimeout(timeout)
         # connect to host
         try:
             self.sock.connect((host, port))
-        except socket.timeout:
-            raise socket.timeout('Failed to connect to %s:%i'%(host,port))
+        except socket.timeout as e:
+            raise ConnectionError(self,socket.timeout('Failed to connect to %s:%i'%(host,port))
         self.eom = eom
         self.trim = trim
         self.buffer = buffer
         self.host = host
+        self.port = port
     
+    def __str__(self):
+        return '%s device at %s:%i'%(self._protocol,self.host,self.port)
+
     def close(self):
         """Close the associated socket"""
         self.sock.close()
+        del self.sock
     
     def has_reply(self,timeout=0):
         """Checks whether a reply is waiting to be read"""
         # is something waiting on the socket to be read?
         socklist = select.select([self.sock],[],[],timeout)
         return len(socklist[0])>0
-    
+        
     def flush(self,timeout=0):
         """Removes any pending data to be received from the socket, and returns the number of bytes flushed"""
         # read with zero timeout until there's nothing remaining to read
@@ -83,6 +96,7 @@ class TCPInterface:
     
 import re
 class TelnetInterface(TCPInterface):
+    _protocol = 'Telnet'
     def __init__(self, host, port=23, timeout=1, eom='\n', prompt='> ', initial=None):
         """
         Create a Telnet-style connection to the specified device. Telnet connections are TCP connections where the device emits a ready-for-input string ("prompt") that needs to be removed from responses.
@@ -106,7 +120,7 @@ class TelnetInterface(TCPInterface):
                 if self.re_end.search(l) is not None:
                     break
         except socket.timeout:
-            raise RuntimeError('Device did not return a ready prompt')
+            raise ConnectionError(self,e,'Device did not return a ready prompt')
 
     def read(self):
         """Read data from the socket, until the ready-for-input prompt is received. The prompt string is removed from the response."""
