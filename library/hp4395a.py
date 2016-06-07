@@ -27,16 +27,16 @@ assert opts['SWPT'] in ('LINF','LOGF'), 'Unknown sweep mode'
 # download trace
 if BINARY_MODE:
 	# binary mode is fast, but harder to debug
-	dev.write('FORM3; OUTPDTRC?')   # 64-bit mode, query data
-	if fmt.startswith('SPEC'):      # spectrum analyser (real data)
-		spec = dev.read_block('f8')
-	else:                           # VNA mode (imag part is auxiliary)
-		spec = dev.read_block('c16').real
-	dev.write('FORM2; OUTPSWPRM?')  # 32-bit mode, query frequencies
-	freq = dev.read_block('f4')
+	dev.write('FORM3')          # 64-bit mode for data
+	if fmt.startswith('SPEC'):  # spectrum analyser (real data)
+		spec = dev.ask_block('OUTPDTRC?','f8')
+	else:                       # VNA mode (imag part is auxiliary)
+		spec = dev.ask_block('OUTPDTRC?','c16').real
+	dev.write('FORM2')          # 32-bit mode for frequencies
+	freq = dev.read_block('OUTPSWPRM?','f4')
 else:
 	import numpy as np
-	dev.write('FORM4')	# ASCII mode
+	dev.write('FORM4')  # ASCII mode
 	specdat = dev.ask('OUTPDTRC?')
 	spec = np.fromstring(specdat[1:],sep=',')
 	freqdat = dev.ask('OUTPSWPRM?')

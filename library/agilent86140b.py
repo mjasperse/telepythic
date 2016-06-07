@@ -41,8 +41,7 @@ for i in 'ABCDEF':
         start = dev.ask('TRAC:X:STAR? TR'+i)*1e9    # in nm
         stop = dev.ask('TRAC:X:STOP? TR'+i)*1e9     # in nm
         X = np.linspace(start,stop,npts)
-        dev.write('TRAC:DATA:Y? TR'+i)
-        Y = dev.read_block('f4')
+        Y = dev.ask_block('TRAC:DATA:Y? TR'+i,'f4')
         tr[i] = np.transpose([X,Y])
 
 # we're done, return to local control

@@ -14,8 +14,6 @@ Relevant list of commands available at
 import sys
 from telepythic import TelepythicDevice, PrologixInterface
 import numpy as np
-import pandas as pd
-import pylab
 
 # connect to device
 bridge = PrologixInterface(gpib=1,host=177,timeout=0.5)
@@ -35,26 +33,29 @@ def get_trace(cmd):
     # first value is an integer, listing how many values follow
     n = int(Y.pop(0))
     # check that it matches what we got (i.e. no data was lost)
-    assert len(Y) == n, 'Got '+str(len(Y))+' elems, expected '+str(n)
+    assert len(Y) == n, 'Got %i elems, expected %i'%(len(Y),n)
     # convert to a numpy array
     return np.asarray(Y,'f')
 
+import pylab
 pylab.clf()
 res = {}
 for t in 'ABC':                             # device has 3 traces
-    if dev.ask('DSP'+t+'?'):                # if the trace is visible
+    if dev.ask('DSP%s?'%t):                 # if the trace is visible
         print 'Reading Trace',t             # download this trace
         res[t+'V'] = get_trace('LDAT'+t)    # download measurement values (Y)
         res[t+'L'] = get_trace('WDAT'+t)    # download wavelength values (X)
         pylab.plot(res[t+'L'],res[t+'V'])   # plot results
 
+# close connection to prologix
+dev.close()
+
 # convert results dict to a pandas dataframe
+import pandas as pd
 df = pd.DataFrame(res)
 if len(sys.argv) > 1:
     # write to csv if filename was specified
     df.to_csv(sys.argv[1],index=False)
 
-# close connection to prologix
-dev.close()
 # show graph
 pylab.show()

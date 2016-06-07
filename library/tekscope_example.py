@@ -6,7 +6,7 @@ import telepythic
 from telepythic.library import tekscope
 
 # look for USB instrument (will fail if there is more than one)
-instr = telepythic.pyvisa_connect('USB?*::INSTR')
+instr = telepythic.find_visa('USB?*::INSTR')
 # connect to the instrument as an oscilloscope
 scope = tekscope.TekScope(instr)
 print 'Connected', scope.id().strip()

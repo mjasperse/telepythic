@@ -1,6 +1,6 @@
 """
 TEKTRONIX OSCILLOSCOPE INTERFACE
-Connects to TekTronix TDS, DPO and MSO oscilloscopes over USB or ethernet, and provides a simple interface to download data from the scope.
+Connects to TekTronix TDS, DPO and MSO oscilloscopes, and provides a simple interface to download data from the scope.
 
 Programming guides: http://www.tek.com/search/apachesolr_search/programmer?filters=type%3A%28%22manual%22%29%20tid%3A1012
 """
@@ -9,7 +9,9 @@ from telepythic import TelepythicDevice
 import numpy as np
 
 class TekScope(TelepythicDevice):
+	"""Helper class for communicating with TekTronix digital oscilloscopes."""
     def __init__(self,interface,**kwargs):
+        """Connect to scope over specified interface. If "interface" is string, connect as a telnet instance"""
         if isinstance(interface,str):
             from telepythic import TelnetInterface
             interface = TelnetInterface(
@@ -23,6 +25,8 @@ class TekScope(TelepythicDevice):
         self.write('VERB 0; HEAD 0')
         
     def channels(self):
+        """Return a dictionary of the channels supported by this scope and whether they are currently displayed.
+        Includes REF and MATH channels if applicable"""
         # want to enable HEAD to get channel names as well
         prev = self.ask('HEAD?')
         self.write('HEAD 1')
@@ -40,6 +44,8 @@ class TekScope(TelepythicDevice):
         return vals
 
     def waveform(self,channel=None):
+        """Downloads the active (or the specified) channel from the scope in binary mode.
+        Returns a tuple (A,T,Y) consisting of channel attributes as queried with WFMP? and 1D arrays of time and y-values"""
         # select channel if required
         if channel is not None:
             if isinstance(channel,int) or channel in '1234':
@@ -75,8 +81,7 @@ class TekScope(TelepythicDevice):
         # flush anything waiting to be read
         self.flush()
         # get the raw curve data
-        self.write('CURV?')
-        Y = self.read_block(format=fmt)
+        Y = self.ask_block('CURV?',format=fmt)
         assert len(Y) == npts, 'Incorrect response size'
         # transform the data
         T = wfmo['XIN']*np.arange(0,npts) + wfmo['XZE']
@@ -86,4 +91,5 @@ class TekScope(TelepythicDevice):
         return wfmo, T, Y
 
     def lock(self,locked=True):
+        """Lock (or unlock) the scope's front panel"""
         self.write('LOCK ALL' if locked else 'LOCK NONE')
