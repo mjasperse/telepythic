@@ -22,6 +22,7 @@ spec = dev.read_block('f8')
 ```
 
 Several examples [are provided in the `library/` directory][library] showing how to interface with different types of device:
+
 * Agilent 86140B Optical Spectrum Analyser
 * Ando AQ6315 Optical Spectrum Analyser
 * Galil RIO Programmable Logic Controller
@@ -37,6 +38,7 @@ First you create an instance of the interface you want to communicate with (e.g.
 You can either create an instance of `TelepythicDevice` directly, or subclass it to provide convenience functionality (e.g. [the TekScope class][tekscope], which enables direct download of displayed waveforms).
 
 The "interface" is any class that provides the following functions:
+
 * `write(data)`, write the binary string "data" to the device
 * `read()`, read an ASCII response string from the device
 * `read_raw(size)`, read exactly "size" bytes back from the device
@@ -60,6 +62,7 @@ dev = telepythic.TelepythicDevice(instr)
 ```
 
 The device class provides access to "write" and "read" commands, as well as a number of convenience functions:
+
 * `id()` to send the standard query `*IDN?`, and optionally compare it against an expected reply.
 * `read_block()` to interpret the binary "block" format of GPIB
 * `ask()` for the combination of write-then-read.
