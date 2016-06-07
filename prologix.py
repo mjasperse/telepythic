@@ -4,8 +4,10 @@ Copyright 2014 by Martijn Jasperse
 https://bitbucket.org/martijnj/telepythic
 """
 from tcp import TCPInterface
+from telepythic import TelepythicError, ConnectionError
 
 class PrologixInterface(TCPInterface):
+    _protocol = 'Prologix'
     def __init__(self, gpib, host, port=1234, timeout=1, auto=True, assert_eoi=True, eos=None):
         """
         Connect to the Prologix Ethernet<->GPIB bridge at (host,port) and communicate with the device at the specified GPIB address. Attempts to poll the device after connection to ensure device is operating.
@@ -22,7 +24,7 @@ class PrologixInterface(TCPInterface):
         # make sure it's what we expect
         self.write('++ver\n')
         if not self.read(True).startswith('Prologix GPIB'):
-            raise RuntimeError('Not a Prologix device')
+            raise ConnectionError(self,None,'Not a Prologix device')
         
         # set controller mode
         self.write('++mode 1\n')
@@ -45,7 +47,7 @@ class PrologixInterface(TCPInterface):
         
         # can we serial poll the device?
         try:    self.poll()
-        except: raise RuntimeError('Device did not respond to poll')
+        except: raise ConnectionError(self,None,'Device did not respond to poll')
         
     def __del__(self):
         # clean up if possible

@@ -5,6 +5,35 @@ https://bitbucket.org/martijnj/telepythic
 """
 import numpy as np
 
+class TelepythicError(Exception):
+    """A simple exception class for use with telepythic, that wraps underlying protocol errors."""
+    def __init__(self,device,base,descr=None):
+        if base is not None:
+            # are we daisy-chaining wrapper classes?
+            if hasattr(base, 'base_error'):
+                base = base.base_error
+            # append the description from the base error
+            if descr is None:
+                descr = str(base)
+            else:
+                descr = descr + ': ' + str(base)
+        # initialise the standard exception class
+        super(Exception,self).__init__(descr.format(device=str(device)))
+        # store variables
+        self.device = device
+        self.base_error = base
+
+class ConnectionError(TelepythicError):
+    """An error occurred while attempting to connect to the device"""
+    def __init__(self,device,base):
+        TelepythicError.__init__(self,device,base,'Failed to connect to {device}')
+
+class QueryError(TelepythicError):
+    """A helper class that describes the command which failed and why"""
+    def __init__(self,query,device,base):
+        TelepythicError.__init__(self,device,base,'Query '+repr(query)+' on {device} failed')
+
+
 class TelepythicDevice:
     def __init__(self,interface):
         """
@@ -14,6 +43,8 @@ class TelepythicDevice:
             read(), read_raw(), write()
         """
         self.dev = interface
+        # do we have an underlying bytestream that can be read in segments? (not supported by VISA)
+        # see also read_block()
         self.bstream = getattr(interface,'bstream',True) and not hasattr(interface,'visalib')
     
     def __del__(self):
@@ -29,7 +60,7 @@ class TelepythicDevice:
                 id = id.upper()
                 expect = expect.upper()
             if not id.startswith(expect):
-                raise RuntimeError('Expected ID '+repr(expect)+', got '+repr(id))
+                raise TelepythicError(self.dev,None,'Expected ID '+repr(expect)+', got '+repr(id))
         return id
     
     def read_block(self,format=None):
@@ -46,21 +77,21 @@ class TelepythicDevice:
             # parse *part* of a response. If the "size" argument does not match the length of the
             # response (as defined by the EOM), an error is raised.
             # Hence we must read the *entire* raw response in, then parse it in sections.
-        	data = self.read_raw(None)
-        	head = data[:2]
-        	assert head[0] == '#', 'Not a binary block array'
-        	hlen = int(data[1])
-        	dlen = int(data[2:2+hlen])
-        	assert len(data) - (2+hlen+dlen) <= 2, 'Invalid block length'
-        	data = data[2+hlen:2+hlen+dlen]
+            data = self.read_raw(None)
+            head = data[:2]
+            assert head[0] == '#', 'Not a binary block array'
+            hlen = int(data[1])
+            dlen = int(data[2:2+hlen])
+            assert len(data) - (2+hlen+dlen) <= 2, 'Invalid block length'
+            data = data[2+hlen:2+hlen+dlen]
         else:
             # We don't know in advance how long the response is so consume piece by piece
-        	head = self.read_raw(2)
-        	assert head[0] == '#', 'Not a binary block array'
-        	dlen = int(self.read_raw(int(head[1])))
-        	data = self.read_raw(dlen)
+            head = self.read_raw(2)
+            assert head[0] == '#', 'Not a binary block array'
+            dlen = int(self.read_raw(int(head[1])))
+            data = self.read_raw(dlen)
         if format is None:
-        	return data
+            return data
         return np.fromstring(data,dtype=format)
     
     def parse_reply(self, x):
@@ -75,11 +106,22 @@ class TelepythicDevice:
     
     def ask(self, query, size=None):
         """A helper function that writes the command "query" and reads the reply. If "size" is not None, the response is assumed to be a binary string of that length"""
-        self.dev.write(query)
-        if size is None:
-            return self.dev.read()
-        else:
-            return self.dev.read_raw(size)
+        try:
+            self.dev.write(query)
+            if size is None:
+                return self.dev.read()
+            else:
+                return self.dev.read_raw(size)
+        except Exception as e:
+            raise QueryError(self.dev, query, e)
+    
+    def ask_block(self, query, format=None):
+        """A helper function to ask a query that returns a GPIB "block" format response. See also read_block()"""
+        try:
+            self.dev.write(query)
+            return self.read_block(format)
+        except Exception as e:
+            raise QueryError(self.dev, query, e)
     
     def query(self, query):
         """A helper function that asks "query" and returns the response. "query" can be a vector, in which case a dictionary of responses is returned."""
@@ -92,20 +134,32 @@ class TelepythicDevice:
     
     def read(self):
         """Read data from the device (until EOM)"""
-        return self.dev.read()
+        try:
+            return self.dev.read()
+        except Exception as e:
+            raise TelepythicError(self.dev, e)
     
     def read_raw(self, size):
         """Read exactly "size" bytes from the device"""
-        return self.dev.read_raw(size)
+        try:
+            return self.dev.read_raw(size)
+        except Exception as e:
+            raise TelepythicError(self.dev, e)
     
     def write(self, msg):
         """Write the specified string to the device"""
-        return self.dev.write(msg)
+        try:
+            return self.dev.write(msg)
+        except Exception as e:
+            raise TelepythicError(self.dev, e)
     
     def flush(self):
         """Removes any pending response, returning the number of bytes flushed, or -1 if not supported by the device"""
         if hasattr(self.dev,"flush"):
-            return self.dev.flush()
+            try:
+                return self.dev.flush()
+            except Exception as e:
+                raise TelepythicError(self.dev, e)
         return -1
     
     def close(self):
@@ -118,21 +172,24 @@ class TelepythicDevice:
             self.dev.close()
 
 
+def find_visa(resource,timeout=1):
+    """Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards.
+    The VISA communications timeout is "timeout", specified in seconds."""
+    import pyvisa
+    # query all available VISA devices
+    rm = pyvisa.ResourceManager()
+    # enumerate the USB devices
+    devs = rm.list_resources(resource)
+    # check there's only one
+    if len(devs) == 0:
+        raise ConnectionError(repr(resource),None,"No VISA devices found for {device}")
+    elif len(devs) > 2:
+        raise ConnectionError(repr(resource),None,"Specified VISA resource {device} describes %i devices"%len(devs))
+    # open the device
+    instr = rm.open_resource(devs[0])
+    instr.timeout = timeout*1000 # VISA timeout in ms
+    return instr
+
 def pyvisa_connect(resource,timeout=1):
-	"""Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards.
-	The VISA communications timeout is "timeout", specified in seconds."""
-	import pyvisa
-	# query all available VISA devices
-	rm = pyvisa.ResourceManager()
-	# enumerate the USB devices
-	devs = rm.list_resources(resource)
-	# check there's only one
-	if len(devs) == 0:
-		raise RuntimeError("No VISA devices found")
-	elif len(devs) > 2:
-		raise RuntimeError("Specified VISA resource '%s' describes %i devices"%(resource,len(devs)))
-	
-	# open the device
-	instr = rm.open_resource(devs[0])
-	instr.timeout = timeout*1000 #ms
-	return instr
+    """Legacy name for find_visa()"""
+    return find_visa(resource,timeout)
