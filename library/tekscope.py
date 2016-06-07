@@ -9,7 +9,7 @@ from telepythic import TelepythicDevice
 import numpy as np
 
 class TekScope(TelepythicDevice):
-	"""Helper class for communicating with TekTronix digital oscilloscopes."""
+    """Helper class for communicating with TekTronix digital oscilloscopes."""
     def __init__(self,interface,**kwargs):
         """Connect to scope over specified interface. If "interface" is string, connect as a telnet instance"""
         if isinstance(interface,str):

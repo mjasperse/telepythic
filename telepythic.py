@@ -25,13 +25,16 @@ class TelepythicError(Exception):
 
 class ConnectionError(TelepythicError):
     """An error occurred while attempting to connect to the device"""
-    def __init__(self,device,base):
-        TelepythicError.__init__(self,device,base,'Failed to connect to {device}')
+    def __init__(self,device,base,reason=None):
+        descr = 'Failed to connect to {device}'
+        if reason is not None: descr = descr + ': ' + reason
+        TelepythicError.__init__(self,device,base,descr)
 
 class QueryError(TelepythicError):
     """A helper class that describes the command which failed and why"""
-    def __init__(self,query,device,base):
+    def __init__(self,device,base,query):
         TelepythicError.__init__(self,device,base,'Query '+repr(query)+' on {device} failed')
+        self.query = query
 
 
 class TelepythicDevice:
@@ -113,7 +116,7 @@ class TelepythicDevice:
             else:
                 return self.dev.read_raw(size)
         except Exception as e:
-            raise QueryError(self.dev, query, e)
+            raise QueryError(self.dev, e, query)
     
     def ask_block(self, query, format=None):
         """A helper function to ask a query that returns a GPIB "block" format response. See also read_block()"""
@@ -121,7 +124,7 @@ class TelepythicDevice:
             self.dev.write(query)
             return self.read_block(format)
         except Exception as e:
-            raise QueryError(self.dev, query, e)
+            raise QueryError(self.dev, e, query)
     
     def query(self, query):
         """A helper function that asks "query" and returns the response. "query" can be a vector, in which case a dictionary of responses is returned."""
@@ -168,26 +171,26 @@ class TelepythicDevice:
             self.lock(False)
         elif hasattr(self.dev,"lock"):
             self.dev.lock(False)
-        if hasattr(self.dev,"close"):
-            self.dev.close()
+        self.dev = None
 
 
 def find_visa(resource,timeout=1):
     """Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards.
     The VISA communications timeout is "timeout", specified in seconds."""
     import pyvisa
-    # query all available VISA devices
-    rm = pyvisa.ResourceManager()
-    # enumerate the USB devices
-    devs = rm.list_resources(resource)
-    # check there's only one
-    if len(devs) == 0:
-        raise ConnectionError(repr(resource),None,"No VISA devices found for {device}")
-    elif len(devs) > 2:
-        raise ConnectionError(repr(resource),None,"Specified VISA resource {device} describes %i devices"%len(devs))
-    # open the device
-    instr = rm.open_resource(devs[0])
-    instr.timeout = timeout*1000 # VISA timeout in ms
+    try:
+        # query all available VISA devices
+        rm = pyvisa.ResourceManager()
+        # enumerate the USB devices
+        devs = rm.list_resources(resource)
+        # check there's only one
+        assert len(devs) != 0, "No VISA devices found"
+        assert len(devs) < 2, "Resource describes %i devices"%len(devs)
+        # open the device
+        instr = rm.open_resource(devs[0])
+        instr.timeout = timeout*1000 # VISA timeout in ms
+    except Exception as e:
+	    raise ConnectionError(repr(resource),e)
     return instr
 
 def pyvisa_connect(resource,timeout=1):
