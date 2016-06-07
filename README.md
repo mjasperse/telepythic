@@ -17,8 +17,8 @@ dev = TelepythicDevice(bridge)
 # make sure the device is connect and identifies correctly
 id = dev.id(expect="HEWLETT-PACKARD,4395A")
 # change to 64-bit binary mode and download spectrum
-dev.write('FORM3; OUTPDTRC?')
-spec = dev.read_block('f8')
+dev.write('FORM3')
+spec = dev.ask_block('OUTPDTRC?','f8')
 ```
 
 Several examples [are provided in the `library/` directory][library] showing how to interface with different types of device:
@@ -47,20 +47,7 @@ This simple definition is compatible with other driver projects, such as [pyvisa
 
 The classes provided by `telepythic` account for several problems that naive handlers may fail at, for example a TCP connection where a response is split over many packets, EOL appearing in binary transfers, and EOM in Telnet sessions.
 
-Although you can communicate directly using the interface class, it is recommended to use the separate "device" class so that the same code can be executed trivially on different interfaces, for example
-```python
-import telepythic
-# define the interface
-if tcp:
-    # a direct TCP connection
-	instr = telepythic.TCPInterface(ipaddress)
-elif usb:
-    # connect to USB using pyvisa
-    instr = telepythic.pyvisa_connect('USB?*::INSTR')
-# define the device
-dev = telepythic.TelepythicDevice(instr)
-```
-
+Although you can communicate directly using the interface class, it is recommended to use the separate "device" class so that the same code can be executed trivially on different interfaces.
 The device class provides access to "write" and "read" commands, as well as a number of convenience functions:
 
 * `id()` to send the standard query `*IDN?`, and optionally compare it against an expected reply.
@@ -68,17 +55,24 @@ The device class provides access to "write" and "read" commands, as well as a nu
 * `ask()` for the combination of write-then-read.
 * `query()` which behaves like `ask()`, but parses responses into python datatypes, and can construct a `dict` from a list of queries.
 
+These functions also wrap exceptions in the lower-level communications with the one of the following:
+
+* `TelepythicError`: Parent error class, also describes generic communication error (e.g. timeout).
+* `ConnectionError`: Failed to connect to the specified device.
+* `QueryError`: Exception raised during an `ask()` or `query()` call, which includes the query that failed.
+
+The underlying exception can be accessed through the `base_error` attribute of the exception in case library-specific handling is required.
 
 
 ### Can I use VISA? ###
 
 **Absolutely!** The excellent [pyvisa] module can be easily used as a back-end driver for `telepythic` to enable connection to any VISA-enabled device.
-The wrapper function `pyvisa_connect` is provided to simplify connecting to a single device based on its VISA identification string (wildcards _are_ permitted).
+The wrapper function `find_visa` is provided to simplify connecting to a single device based on its VISA identification string (wildcards _are_ permitted).
 
 For example, if there is only one USB instrument connected to the machine, connecting is as simple as
 ```python
 import telepythic
-instr = telepythic.pyvisa_connect('USB?*::INSTR')
+instr = telepythic.find_visa('USB?*::INSTR')
 dev = telepythic.TelepythicDevice(instr)
 print dev.id()
 ```
