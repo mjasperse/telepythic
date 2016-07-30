@@ -182,14 +182,15 @@ class TelepythicDevice:
 def find_visa(resource,timeout=1):
     """Use pyvisa to connect to a VISA resource described by "resource", which may contain wildcards.
     The VISA communications timeout is "timeout", specified in seconds."""
-    import pyvisa
+    try:    import pyvisa
+    except: raise ImportError('Requires "pyvisa" to use VISA resources')
     try:
         # query all available VISA devices
         rm = pyvisa.ResourceManager()
         # enumerate the USB devices
         devs = rm.list_resources(resource)
         # check there's only one
-        assert len(devs) != 0, "No VISA devices found"
+        assert len(devs) != 0, "No VISA resource found"
         assert len(devs) < 2, "Resource describes %i devices"%len(devs)
         # open the device
         instr = rm.open_resource(devs[0])

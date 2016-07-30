@@ -8,14 +8,14 @@ import telepythic
 
 def process_args(name,tcp_only=False,output=True,port=None):
 	opt = argparse.ArgumentParser(description = "Python interface to "+name)
-	opt.add_argument('-i','--host','--ip',metavar='ADDR',type=str,help='Set IP address')
-	opt.add_argument('-p','--port',metavar='PORT',type=int,help='Set TCP port',default=port)
+	opt.add_argument('-i','--host','--ip',metavar='ADDR',type=str,help='connect to device with specified IP address',required=tcp_only)
+	opt.add_argument('-p','--port',metavar='PORT',type=int,help='port for TCP connection',default=port)
 	if not tcp_only:
-		opt.add_argument('-g','--gpib',metavar='ADDR',type=int,help='Set GPIB address')
-		opt.add_argument('-V','--visa',metavar='VISA',type=str,help='Set VISA address')
+		opt.add_argument('-g','--gpib',metavar='ADDR',type=int,help='connect to device at this GPIB address')
+		opt.add_argument('-V','--visa',metavar='RES',type=str,help='connect to this VISA resource')
 		opt.epilog = "TCP interface is used by default, but if both GPIB and TCP are set then the Prologix interface will be used instead. Note that if VISA is specified, the other connection parameters are ignored."
-	opt.add_argument('-t','--timeout',type=int,help='Communication timeout (in seconds)',default=1)
-	opt.add_argument('-o','--output',metavar='FILE',help='Save data to FILE')
+	opt.add_argument('-t','--timeout',metavar='T',type=int,help='timeout for communication',default=1)
+	opt.add_argument('-o','--output',metavar='F',help='save collected data to specified file')
 	args = vars(opt.parse_args())
 	
 	# drop the None values
@@ -26,14 +26,13 @@ def process_args(name,tcp_only=False,output=True,port=None):
 		opt.error('TCP port must be specified')
 	return args
 
-def cmdline_interface(name,telnet=False,*args,**kwargs):
+def parse(name,telnet=False,*args,**kwargs):
 	if telnet: kwargs['tcp_only'] = True
 	args = process_args(name,*args,**kwargs)
-	if 'output' in args:
-		f = args.pop('output')
+	f = args.pop('output',None)
 	if 'visa' in args:
 		# VISA connection
-		return telepythic.find_visa(**args)
+		return telepythic.find_visa(args['visa'],args['timeout'])
 	elif 'host' in args:
 		if 'gpib' in args:
 			# prologix interface
@@ -45,8 +44,9 @@ def cmdline_interface(name,telnet=False,*args,**kwargs):
 			# raw TCP connection
 			return telepythic.TCPInterface(**args)
 	elif 'gpib' in args:
-		raise NotImplementedError("Can't connect with GPIB without TCP or VISA interface")
+		# probably a VISA connection
+		return telepythic.find_visa('GPIB0::%d::INSTR'%args['gpib'])
 	raise NotImplementedError("Unknown connection specified")
 
 if __name__ == '__main__':
-	print cmdline_interface("Test device")
+	print parse("Test device")

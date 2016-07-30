@@ -93,3 +93,14 @@ class TekScope(TelepythicDevice):
     def lock(self,locked=True):
         """Lock (or unlock) the scope's front panel"""
         self.write('LOCK ALL' if locked else 'LOCK NONE')
+
+
+if __name__ == '__main__':
+    import _cmdline
+    ifc = _cmdline.parse("Tektronix digital oscilloscopes",telnet=True,port=4000)
+    dev = TekScope(ifc)
+    import pylab as pyl
+    for ch in dev.channels():
+        wfmo, T, Y = dev.waveform(ch)
+        pyl.plot(T,Y)
+    pyl.show()
