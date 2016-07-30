@@ -32,6 +32,8 @@ class TCPInterface:
                 # replace the last octet
                 host = myaddr.rsplit('.',1)[0] + '.' + str(host)
         # create a TCP socket
+        self.host = host
+        self.port = port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         self.sock.settimeout(timeout)
         # connect to host
@@ -42,8 +44,6 @@ class TCPInterface:
         self.eom = eom
         self.trim = trim
         self.buffer = buffer
-        self.host = host
-        self.port = port
     
     def __str__(self):
         return '%s device at %s:%i'%(self._protocol,self.host,self.port)
