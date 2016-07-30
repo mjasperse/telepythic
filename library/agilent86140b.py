@@ -27,19 +27,19 @@ sens = dev.ask('POW:DC:RANG:LOW?')      # sensitivity
 units = dev.ask('UNIT:POW?')            # unit of y-axis
 
 # are we averaging?
-if dev.ask('CALC:AVER:STAT?'):
-    navg = dev.ask('CALC:AVER:COUN?')
+if dev.query('CALC:AVER:STAT?'):
+    navg = dev.query('CALC:AVER:COUN?')
 else:
     navg = 0
 
 tr = {}
 dev.write('FORM REAL,32')
 for i in 'ABCDEF':
-    if dev.ask('DISP:TRAC:STAT? TR'+i):
+    if dev.query('DISP:TRAC:STAT? TR'+i):
         print 'Downloading trace', i
-        npts = dev.ask('TRAC:POIN? TR'+i)           # number of points
-        start = dev.ask('TRAC:X:STAR? TR'+i)*1e9    # in nm
-        stop = dev.ask('TRAC:X:STOP? TR'+i)*1e9     # in nm
+        npts = dev.query('TRAC:POIN? TR'+i)           # number of points
+        start = dev.query('TRAC:X:STAR? TR'+i)*1e9    # in nm
+        stop = dev.query('TRAC:X:STOP? TR'+i)*1e9     # in nm
         X = np.linspace(start,stop,npts)
         Y = dev.ask_block('TRAC:DATA:Y? TR'+i,'f4')
         tr[i] = np.transpose([X,Y])
