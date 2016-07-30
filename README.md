@@ -30,6 +30,17 @@ Several examples [are provided in the `library/` directory][library] showing how
 * Stanford SR770 FFT Network Analyser
 * TekTronix Digital Oscilloscopes
 
+
+### How do I install it? ###
+You can install `telepythic` straight from the cheeseshop using `pip` in the standard way,
+```
+pip install telepythic
+```
+
+If you get an installation error, try upgrading the "setuptools" package, which you can do with `pip install --upgrade setuptools` (or your distro's equivalent).
+
+Alternatively, download the source directly from the repo using Mercurial.
+
    
 ### How do I use it? ###
 
