@@ -74,7 +74,7 @@ class TCPInterface:
         while self.has_reply(timeout=0):
             data += self.sock.recv(self.buffer)
         if self.trim:
-            return data.trim()
+            return data.strip()
         return data
     
     def read_raw(self,size):
