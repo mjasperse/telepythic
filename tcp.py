@@ -16,7 +16,7 @@ class TCPInterface:
         host    -- Host name or IP address of device to connect to. Can be an integer, either specifying the IP as a 32-bit integer, or as the final octet of the IP.
         port    -- Port to connect to on host
         timeout -- Communication timeout, in seconds (default: 1)
-        eom     -- "End-Of-Message" string, appended to outgoing messages if not present (default: \r\n)
+        eom     -- "End-Of-Message" string, appended to outgoing messages if not present (default: \\r\\n)
         trim    -- Whether to trip whitespace from responses (default: True)
         buffer  -- TCP receive buffer chunk size (default: 1024)
         """

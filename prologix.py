@@ -12,12 +12,12 @@ class PrologixInterface(TCPInterface):
         """
         Connect to the Prologix Ethernet<->GPIB bridge at (host,port) and communicate with the device at the specified GPIB address. Attempts to poll the device after connection to ensure device is operating.
         
-        The Prologix writes its buffer to the GPIB address upon receiving '\n' (automatically appended if not present). This '\n' is removed and replaced with the "eos" string, and the EOI line is optionally asserted.
+        The Prologix writes its buffer to the GPIB address upon receiving '\\n' (automatically appended if not present). This '\\n' is removed and replaced with the "eos" string, and the EOI line is optionally asserted.
         
         Keyword arguments:
         auto        -- automatically read after every write command, as opposed to issuing "++read" on every read command (default: True)
         assert_eoi  -- assert the EOI GPIB line with the last character sent (default: True)
-        eos         -- string to append to signify End-Of-Send, must be one of '\n', '\r' or '\r\n' (default None)
+        eos         -- string to append to signify End-Of-Send, must be one of '\\n', '\\r' or '\\r\\n' (default None)
         """
         # connect to prologix unit (prologix itself requires '\n' eom termination)
         TCPInterface.__init__(self,host,port,timeout,eom='\n')
