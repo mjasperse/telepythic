@@ -14,7 +14,7 @@ import sys
 import time
 
 # connect to device
-bridge = PrologixInterface(gpib=23,host=177)
+bridge = PrologixInterface(gpib=23,host=15)
 dev = TelepythicDevice(bridge)
 # confirm device identity
 id = dev.id('AGILENT,86140B')
@@ -33,7 +33,7 @@ else:
     navg = 0
 
 tr = {}
-dev.write('FORM REAL,32')
+dev.write('FORM REAL,32')	# transfer data in binary (fast) mode
 for i in 'ABCDEF':
     if dev.query('DISP:TRAC:STAT? TR'+i):
         print 'Downloading trace', i
@@ -41,7 +41,7 @@ for i in 'ABCDEF':
         start = dev.query('TRAC:X:STAR? TR'+i)*1e9    # in nm
         stop = dev.query('TRAC:X:STOP? TR'+i)*1e9     # in nm
         X = np.linspace(start,stop,npts)
-        Y = dev.ask_block('TRAC:DATA:Y? TR'+i,'f4')
+        Y = dev.ask_block('TRAC:DATA:Y? TR'+i,'>f4')  # NB: big endian data
         tr[i] = np.transpose([X,Y])
 
 # we're done, return to local control
@@ -51,11 +51,12 @@ dev.close()
 if len(sys.argv) > 1:
     with open(sys.argv[1],'w') as f:
         print >> f, time.strftime('%Y%m%dT%H%M%S')
-        print >> f, dev.id
-        print >> f, "BW,", bw, ", Ref,", ref, ", Sens,", sens, ", Navg,", navg, '\n'
+        print >> f, id
+        print >> f, "RBW,", bw, ", RefLvl,", ref, ", Sens,", sens, ", Navg,", navg, '\n'
         print >> f, ', '.join(['TR'+i+'_X, TR'+i+'_Y' for i in tr])
         M = np.hstack(tr.values())
         np.savetxt(f, M, '%g', ', ', '\n')
+        print "Saved to", f.name
 
 # Make a plot:
 import pylab as pyl
