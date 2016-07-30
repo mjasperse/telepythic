@@ -30,7 +30,7 @@ class TCPInterface:
                 # get the local (default) ip address -- probably breaks on multiple interface machines
                 myaddr = socket.gethostbyname_ex('')[2][0]
                 # replace the last octet
-                host = myaddr.rsplit('.',1)[1] + str(host)
+                host = myaddr.rsplit('.',1)[0] + '.' + str(host)
         # create a TCP socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM, socket.IPPROTO_TCP)
         self.sock.settimeout(timeout)
