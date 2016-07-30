@@ -100,10 +100,15 @@ class TelepythicDevice:
     def parse_reply(self, x):
         """Interpret the reply string and return an appropriately type-cast value"""
         x = x.strip()
+        # is it anything at all?
+        if not len(x): return None
+        # is it an integer?
         try:    return int(x)
         except: pass
+        # is it a floating point value?
         try:    return float(x)
         except: pass
+        # is it a string?
         if x[0] == '"': return x[1:x.rfind('"')]
         return x
     

@@ -40,7 +40,7 @@ class TCPInterface:
         try:
             self.sock.connect((host, port))
         except socket.timeout as e:
-            raise ConnectionError(self,None,'Failed to connect to %s:%i'%(host,port))
+            raise ConnectionError(self,None,'Connection timed out')
         self.eom = eom
         self.trim = trim
         self.buffer = buffer
