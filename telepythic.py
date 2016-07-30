@@ -74,6 +74,8 @@ class TelepythicDevice:
             N    - the size of following length string (single ASCII digit)
             M..M - number of bytes in the following data string (N-digits of ASCII)
             X..X - the actual data string (M bytes of binary data)
+        
+        NB: Be sure to specify include the endian specification in the format string! (e.g. ">f8" for 64-bit big-endian data)
         """
         if not self.bstream:
             # NB: When using pyvisa, multiple sequential read_raw() commands are not permitted to
