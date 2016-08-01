@@ -32,15 +32,19 @@ Several examples [are provided in the `library/` directory][library] showing how
 
 
 ### How do I install it? ###
-You can install `telepythic` straight from the cheeseshop using `pip` in the standard way,
+You can install `telepythic` straight from the [cheeseshop] (PyPI) using `pip` in the standard way,
 ```
 pip install telepythic
 ```
 
 If you get an installation error, try upgrading the "setuptools" package, which you can do with `pip install --upgrade setuptools` (or your distro's equivalent).
 
-Alternatively, download the source directly from the repo using Mercurial.
-
+Alternatively, download the source directly from the repo using [Mercurial] as follows
+```
+hg clone https://bitbucket.org/martijnj/telepythic
+cd telepythic
+python setup.py install
+```
    
 ### How do I use it? ###
 
@@ -94,3 +98,5 @@ Otherwise the `pyvisa` resource manager should be used to iterate over the possi
 [prologix]: http://prologix.biz/gpib-ethernet-controller.html
 [library]: https://bitbucket.org/martijnj/telepythic/src/default/library/
 [tekscope]: https://bitbucket.org/martijnj/telepythic/src/default/library/tekscope.py
+[cheeseshop]: https://pypi.python.org/
+[mercurial]: https://www.mercurial-scm.org/
