@@ -8,7 +8,7 @@ from telepythic import TelepythicError, ConnectionError
 
 class PrologixInterface(TCPInterface):
     _protocol = 'Prologix'
-    def __init__(self, gpib, host, port=1234, timeout=1, auto=True, assert_eoi=True, eos=None):
+    def __init__(self, gpib, host, port=1234, timeout=1, auto=True, assert_eoi=True, eos=None, poll=True):
         """
         Connect to the Prologix Ethernet<->GPIB bridge at (host,port) and communicate with the device at the specified GPIB address. Attempts to poll the device after connection to ensure device is operating.
         
@@ -46,8 +46,9 @@ class PrologixInterface(TCPInterface):
         self.auto = auto
         
         # can we serial poll the device?
-        try:    self.poll()
-        except: raise ConnectionError(self,None,'Device did not respond to poll')
+        if poll:
+            try:    self.poll()
+            except: raise ConnectionError(self,None,'Device did not respond to poll')
         
     def __del__(self):
         # clean up if possible
