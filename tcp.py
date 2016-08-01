@@ -119,8 +119,8 @@ class TelnetInterface(TCPInterface):
                 l = self.sock.recv(self.buffer)
                 if self.re_end.search(l) is not None:
                     break
-        except socket.timeout:
-            raise ConnectionError(self,e,'Device did not return a ready prompt')
+        except socket.timeout as e:
+            raise ConnectionError(self,e,'Connected but no ready prompt, check Telnet is enabled')
 
     def read(self):
         """Read data from the socket, until the ready-for-input prompt is received. The prompt string is removed from the response."""
