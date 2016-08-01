@@ -36,6 +36,34 @@ class Agilent86140b(TelepythicDevice):
 		Y = self.ask_block('TRAC:DATA:Y? '+trace,'>f4')  # NB: big endian data
 		# return a complete list
 		return np.transpose([X,Y])
+		
+	def get_pcl(self):
+		"""Download a PCL file from the unit **TESTING ONLY**"""
+		# set into PCL output mode
+		self.write('HCOPY:DEV:LANG PCL')
+		# make sure it worked
+		assert self.ask('HCOPY:DEV:LANG?') == 'PCL'
+		# request the data
+		self.write('HCOPY:DATA?')
+		# it needs some time to generate the file before it outputs
+		time.sleep(3)
+		# response is an INDEFINITE length binary block reponse
+		if self.bstream:	# we're using a bridge, this is a problem
+			# check the response is of the right form
+			assert self.read_raw(2) == '#0', 'Expected indefinite block response'
+			# accumulate data until we stop getting fed it
+			data = ''
+			while self.dev.has_reply(timeout=1):
+				data = data + dev.read()
+		else:				# we're using VISA so we have a real EOI flag
+			# read raw data until EOI
+			data = self.dev.read_raw()
+			# check header
+			assert data[:2] == '#0', 'Expected indefinite block response'
+			# return the rest
+			data = data[2:]
+		# there's a newline at the end that's unnecessary
+		return data[:-1]
 
 
 if __name__ == '__main__':
