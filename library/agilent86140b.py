@@ -20,7 +20,7 @@ class Agilent86140b(TelepythicDevice):
 		
 	def traces(self):
 		"""Return a list of traces which are currently active"""
-		return ['TR'+i for i in 'ABCDEF' if dev.query('DISP:TRAC:STAT? TR'+i)]
+		return ['TR'+i for i in 'ABCDEF' if self.query('DISP:TRAC:STAT? TR'+i)]
 		
 	def get_trace(self,trace=None):
 		"""Download a trace of data from the unit"""
@@ -54,7 +54,7 @@ class Agilent86140b(TelepythicDevice):
 			# accumulate data until we stop getting fed it
 			data = ''
 			while self.dev.has_reply(timeout=1):
-				data = data + dev.read()
+				data = data + self.dev.read()
 		else:				# we're using VISA so we have a real EOI flag
 			# read raw data until EOI
 			data = self.dev.read_raw()
