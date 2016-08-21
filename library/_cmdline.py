@@ -12,7 +12,7 @@ def process_args(name,tcp_only=False,output=True,port=None):
 	opt.add_argument('-p','--port',metavar='PORT',type=int,help='port for TCP connection',default=port)
 	if not tcp_only:
 		opt.add_argument('-g','--gpib',metavar='ADDR',type=int,help='connect to device at this GPIB address')
-		opt.add_argument('-V','--visa',metavar='RES',type=str,help='connect to this VISA resource')
+		opt.add_argument('-V','--visa',metavar='RES',type=str,help='connect to this VISA resource',const='USB?*',nargs='?')
 		opt.epilog = "TCP interface is used by default, but if both GPIB and TCP are set then the Prologix interface will be used instead. Note that if VISA is specified, the other connection parameters are ignored."
 	opt.add_argument('-t','--timeout',metavar='T',type=int,help='timeout for communication',default=1)
 	opt.add_argument('-o','--output',metavar='F',help='save collected data to specified file')
@@ -27,7 +27,6 @@ def process_args(name,tcp_only=False,output=True,port=None):
 	return args
 
 def parse(name,telnet=False,*args,**kwargs):
-	if telnet: kwargs['tcp_only'] = True
 	args = process_args(name,*args,**kwargs)
 	f = args.pop('output',None)
 	if 'visa' in args:
