@@ -119,7 +119,7 @@ class TelepythicDevice:
         try:
             self.dev.write(query)
             if size is None:
-                return self.dev.read()
+                return self.dev.read().strip()
             else:
                 return self.dev.read_raw(size)
         except Exception as e:
