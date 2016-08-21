@@ -45,8 +45,8 @@ class TekScope(TelepythicDevice):
                 vals[name] = visible
         return vals
 
-    def waveform(self,channel=None):
-        """Downloads the active (or the specified) channel from the scope in binary mode.
+    def waveform(self,channel=None,ascii_mode=False):
+        """Downloads the active (or the specified) channel from the scope in binary mode (unless "ascii_mode" is True).
         Returns a tuple (A,T,Y) consisting of channel attributes as queried with WFMP? and 1D arrays of time and y-values"""
         # select channel if required
         if channel is not None:
@@ -55,10 +55,15 @@ class TekScope(TelepythicDevice):
             if not isinstance(channel,str):
                 raise TypeError("Invalid type for channel")
             self.write('DAT:SOU '+channel.strip())
-            try: self.ask('DAT:SOU?')
-            except: raise ValueError("Invalid channel value")
-        # configure channel for output
-        self.write('DAT:ENC RIB; WID 2')
+            # check that it worked
+            try: self.ask('DAT:SOU?') # should timeout if it failed
+            except: raise ValueError("Invalid channel")
+			
+        # configure output mode
+        if ascii_mode:
+            self.write('DAT:ENC ASCII')
+        else:
+            self.write('DAT:ENC RIB; WID 2')
         # want to enable HEAD for settings names
         prev = self.ask('HEAD?')
         self.write('HEAD 1')
@@ -79,7 +84,6 @@ class TekScope(TelepythicDevice):
         for x in wfmo_vals:
             name, val = x.split(' ',1)
             wfmo[name] = parse(val)
-        fmt = ('>' if wfmo['BYT_O'] == 'MSB' else '<') + 'i' + str(wfmo['BYT_N'])
         npts = wfmo['NR_P']
         assert npts > 0
         
@@ -87,7 +91,12 @@ class TekScope(TelepythicDevice):
         # flush anything waiting to be read
         self.flush()
         # get the raw curve data
-        Y = self.ask_block('CURV?',format=fmt)
+        if ascii_mode:
+            data = self.ask('CURV?')
+            Y = np.fromstring(data,sep=',')
+        else:
+            fmt = ('>' if wfmo['BYT_O'] == 'MSB' else '<') + 'i' + str(wfmo['BYT_N'])
+            Y = self.ask_block('CURV?',format=fmt)
         assert len(Y) == npts, 'Incorrect response size'
         # transform the data
         T = wfmo['XIN']*np.arange(0,npts) + wfmo['XZE']
