@@ -24,9 +24,9 @@ class TekScope(TelepythicDevice):
         # turn off verbose modes
         self.write('VERB 0; HEAD 0')
         
-    def channels(self):
+    def channels(self,all=True):
         """Return a dictionary of the channels supported by this scope and whether they are currently displayed.
-        Includes REF and MATH channels if applicable"""
+        Includes REF and MATH channels if applicable. If "all" is False, only visible channels are returned"""
         # want to enable HEAD to get channel names as well
         prev = self.ask('HEAD?')
         self.write('HEAD 1')
@@ -39,8 +39,10 @@ class TekScope(TelepythicDevice):
         for x in resp.split(';'):
             name, val = x.rsplit(' ',1)
             if name[0] == ':': name = name.rsplit(':',1)[1]
-            try:    vals[name] = bool(int(val))
+            try:    visible = bool(int(val))
             except: continue
+            if all or visible:
+                vals[name] = visible
         return vals
 
     def waveform(self,channel=None):
@@ -50,7 +52,11 @@ class TekScope(TelepythicDevice):
         if channel is not None:
             if isinstance(channel,int) or channel in '1234':
                 channel = 'CH'+str(channel)
-            self.write('DAT:SOU '+channel)
+            if not isinstance(channel,str):
+                raise TypeError("Invalid type for channel")
+            self.write('DAT:SOU '+channel.strip())
+            try: self.ask('DAT:SOU?')
+            except: raise ValueError("Invalid channel value")
         # configure channel for output
         self.write('DAT:ENC RIB; WID 2')
         # want to enable HEAD for settings names
@@ -100,7 +106,7 @@ if __name__ == '__main__':
     ifc = _cmdline.parse("Tektronix digital oscilloscopes",telnet=True,port=4000)
     dev = TekScope(ifc)
     import pylab as pyl
-    for ch in dev.channels():
+    for ch in dev.channels(True):
         wfmo, T, Y = dev.waveform(ch)
         pyl.plot(T,Y)
     pyl.show()
