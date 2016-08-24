@@ -27,7 +27,7 @@ class ConnectionError(TelepythicError):
     """An error occurred while attempting to connect to the device"""
     def __init__(self,device,base,reason=None):
         descr = 'Failed to connect to {device}'
-        if reason is not None: descr = descr + ': ' + reason
+        if reason is not None: descr = descr + ', ' + reason
         TelepythicError.__init__(self,device,base,descr)
 
 class QueryError(TelepythicError):
@@ -86,6 +86,7 @@ class TelepythicDevice:
             head = data[:2]
             assert head[0] == '#', 'Not a binary block array'
             hlen = int(data[1])
+            assert hlen > 0, 'Indefinite blocks not supported'
             dlen = int(data[2:2+hlen])
             assert len(data) - (2+hlen+dlen) <= 2, 'Invalid block length'
             data = data[2+hlen:2+hlen+dlen]
@@ -93,8 +94,11 @@ class TelepythicDevice:
             # We don't know in advance how long the response is so consume piece by piece
             head = self.read_raw(2)
             assert head[0] == '#', 'Not a binary block array'
-            dlen = int(self.read_raw(int(head[1])))
-            data = self.read_raw(dlen)
+            hlen = int(head[1])
+            assert hlen > 0, 'Indefinite blocks not supported'
+            dlen = self.read_raw(hlen)
+            assert len(dlen) == hlen, 'Comms fail during read_block'
+            data = self.read_raw(int(dlen))
         if format is None:
             return data
         return np.fromstring(data,dtype=format)
@@ -102,6 +106,8 @@ class TelepythicDevice:
     def parse_reply(self, x):
         """Interpret the reply string and return an appropriately type-cast value"""
         x = x.strip()
+        # is it a string?
+        if x[0] == '"': return x[1:x.rfind('"')]
         # is it anything at all?
         if not len(x): return None
         # is it an integer?
@@ -110,8 +116,6 @@ class TelepythicDevice:
         # is it a floating point value?
         try:    return float(x)
         except: pass
-        # is it a string?
-        if x[0] == '"': return x[1:x.rfind('"')]
         return x
     
     def ask(self, query, size=None):

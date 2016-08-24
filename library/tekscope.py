@@ -70,7 +70,7 @@ class TekScope(TelepythicDevice):
         # create a dict of all the settings
         wfmo = self.ask('WFMP?')
         assert wfmo.startswith(':WFMP'), 'Unknown response header'
-        wfmo_vals = wfmo.rsplit(':',1)[1].split(';')
+        wfmo_vals = wfmo[wfmo.find(':',1)+1:].split(';')
         
         def parse(x):
             try:    return int(x)
