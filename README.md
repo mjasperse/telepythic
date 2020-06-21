@@ -1,4 +1,4 @@
-# Telepythic #
+# Telepythic
 
 This library is for communicating with measurement and test-equipment using text-based VISA (e.g. GPIB-like) or telnet interfaces. Its intended purpose is to simplify writing scripts to control equipment and download measurements, in an interface-agnostic way.
 
@@ -37,14 +37,6 @@ You can install `telepythic` straight from the [cheeseshop] (PyPI) using `pip` i
 pip install telepythic
 ```
 
-If you get an installation error, try upgrading the "setuptools" package, which you can do with `pip install --upgrade setuptools` (or your distro's equivalent).
-
-Alternatively, download the source directly from the repo using [Mercurial] as follows
-```
-hg clone https://bitbucket.org/martijnj/telepythic
-cd telepythic
-python setup.py install
-```
    
 ### How do I use it? ###
 
@@ -99,4 +91,3 @@ Otherwise the `pyvisa` resource manager should be used to iterate over the possi
 [library]: https://bitbucket.org/martijnj/telepythic/src/default/library/
 [tekscope]: https://bitbucket.org/martijnj/telepythic/src/default/library/tekscope.py
 [cheeseshop]: https://pypi.python.org/
-[mercurial]: https://www.mercurial-scm.org/

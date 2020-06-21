@@ -2,13 +2,13 @@
 TEKTRONIX OSCILLOSCOPE EXAMPLE
 Shows how to connect to a TekTronix oscilloscope over USB using pyvisa, and download all visible channels to an H5 file
 """
-import telepythic
-from telepythic.library import tekscope
+from telepythic import find_visa
+from telepythic.library.tekscope import TekScope
 
 # look for USB instrument (will fail if there is more than one)
-instr = telepythic.find_visa('USB?*::INSTR')
+instr = find_visa('USB?*::INSTR')
 # connect to the instrument as an oscilloscope
-scope = tekscope.TekScope(instr)
+scope = TekScope(instr)
 print 'Connected', scope.id().strip()
 
 ##### download the channels #####

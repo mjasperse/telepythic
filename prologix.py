@@ -1,10 +1,10 @@
 """
 TELEPYTHIC -- a python interface to test equipment
-Copyright 2014 by Martijn Jasperse
-https://bitbucket.org/martijnj/telepythic
+Copyright 2014-2020 by Martijn Jasperse
+https://github.com/mjasperse/telepythic
 """
-from tcp import TCPInterface
-from telepythic import TelepythicError, ConnectionError
+from .tcp import TCPInterface
+from .telepythic import TelepythicError, ConnectionError
 
 class PrologixInterface(TCPInterface):
     _protocol = 'Prologix'
