@@ -15,9 +15,9 @@ class GalilRIO(TelepythicDevice):
         if isinstance(interface,str):
             interface = TelnetInterface(
                 host = interface,
-                eom = '\r\n',       # carriage return with newline
-                prompt = [':','?'], # ":" denotes success, "?" denotes failure
-                initial = 'EO 0',   # turn echo off on connection
+                eom = b'\r\n',        # carriage return with newline
+                prompt = [b':',b'?'], # ":" denotes success, "?" denotes failure
+                initial = b'EO 0',    # turn echo off on connection
                 **kwargs)
         TelepythicDevice.__init__(self,interface)
         
@@ -26,14 +26,14 @@ class GalilRIO(TelepythicDevice):
         Query the error register for the last error code.
         Calling this function does not reset the register.
         """
-        return int(float(self.ask('MG_TC')))
+        return int(float(self.ask(b'MG_TC')))
         
     def get_error(self):
         """
         Query the last error code and get a description.
         Note that making this call resets the error register
         """
-        resp = self.ask('TC1').strip().split(' ',1)
+        resp = self.ask(b'TC1').strip().split(' ',1)
         code = int(resp[0])
         if code == 0: return None
         return (code,resp[1])
@@ -43,7 +43,7 @@ class GalilRIO(TelepythicDevice):
         Query the data record from the Galil unit.
         Returns a dictionary of query results. Analog values are returned as integers, which map to voltages based on the AQ/DQ settings.
         """
-        hdr = self.ask('QR',size=4)
+        hdr = self.ask(b'QR',size=4)
         hdr, size = unpack('<HH',hdr)
         assert size == 56, 'Unexpected packet size'
         data = self.read_raw(size=size-4)
@@ -79,7 +79,7 @@ class GalilRIO(TelepythicDevice):
             "A","B","C" = (remote IP, remote port, protocol (TCP or UDP), local port)
         If the handle is not connected, it does not appear in the dictionary.
         """
-        data = self.ask('TH').split('\r\n')
+        data = self.ask(b'TH').split(b'\r\n')
         M = re.match('CONTROLLER IP ADDRESS ([\d,]+) ETHERNET ADDRESS (\w{2}-\w{2}-\w{2}-\w{2}-\w{2}-\w{2})',data[0])
         assert M is not None, 'Unknown response to TH'
         ip, mac = M.groups()
@@ -95,9 +95,9 @@ class GalilRIO(TelepythicDevice):
         """
         Instruct unit to upload its program to the connected host. If "split" is True, newlines are split for readability of compacted programs.
         """
-        self.write('UL')
+        self.write(b'UL')
         data = ''
-        while not data.endswith('\x1a'):    # terminates with Ctrl+Z
+        while not data.endswith(b'\x1a'):    # terminates with Ctrl+Z
             data += self.read()
         data = data[:-1].strip()
         if split:

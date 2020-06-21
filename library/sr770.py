@@ -12,6 +12,7 @@ from telepythic import TelepythicDevice, PrologixInterface
 import numpy as np
 import sys, time
 
+trace = b''
 ascii_mode = False
 
 # connect to device
@@ -23,19 +24,19 @@ print 'Device ID:',id
 
 # get the current span (see SR770 manual for array listing)
 spans = [ 191e-3, 382e-3, 763e-3, 1.5, 3.1, 6.1, 12.2, 24.4, 48.75, 97.5, 195, 390, 780, 1.56e3, 3.125e3, 6.25e3, 12.5e3, 25e3, 50e3, 100e3 ]
-span = spans[dev.ask('SPAN?'+trace)]
+span = spans[dev.ask(b'SPAN?'+trace)]
 print 'Span = %g Hz' % span
 
 # get units
 units = [ 'Volts Pk', 'Volts RMS', 'dBV', 'dBVrms' ]
-unit = units[dev.ask('UNIT?'+trace)]
+unit = units[dev.ask(b'UNIT?'+trace)]
 print 'Units = ' + unit
-disp = dev.ask('DISP?'+trace)
+disp = dev.ask(b'DISP?'+trace)
 
 # check averaging
-if dev.ask('AVGO?'):
+if dev.ask(b'AVGO?'):
     print 'Averaging = ON'
-    navg = dev.ask('NAVG?')
+    navg = dev.ask(b'NAVG?')
     print 'Number of averages =', navg
 else:
     navg = 0
@@ -44,8 +45,8 @@ else:
 nbins = 400
 
 # get frequency
-start = dev.ask('STRF?')
-if dev.ask('XAXS?'+trace):
+start = dev.ask(b'STRF?')
+if dev.ask(b'XAXS?'+trace):
     # log in frequency
     freq = np.logspace(start, start + span, nbins)
 else:
@@ -55,13 +56,13 @@ else:
 # get the spectrum
 if ascii_mode:
     # comma-separated value list, comma at the end
-    data = dev.ask('SPEC?'+trace, size=nbins*14)[:-1].split(',')
+    data = dev.ask(b'SPEC?'+trace, size=nbins*14)[:-1].split(',')
     assert len(data) == nbins
     spec = np.asarray(data,'f')
 else:   # probably not working yet
-    data = dev.ask('SPEB?'+trace, size=nbins*2)
+    data = dev.ask(b'SPEB?'+trace, size=nbins*2)
     spec = np.fromstring(data,'<i2',count=nbins)
-    fullscale = dev.ask('IRNG?')
+    fullscale = dev.ask(b'IRNG?')
     if disp == 0:   # logarithmic
         spec = (3.0103 * spec)/512.0 - 114.3914 + fullscale   # in dBV
     else:           # linear

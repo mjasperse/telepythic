@@ -16,50 +16,50 @@ class Agilent86140b(TelepythicDevice):
 	def __init__(self, interface):
 		TelepythicDevice.__init__(self,interface)
 		# confirm device identity
-		self.id('AGILENT,86140B')
+		self.id(b'AGILENT,86140B')
 		
 	def traces(self):
 		"""Return a list of traces which are currently active"""
-		return ['TR'+i for i in 'ABCDEF' if self.query('DISP:TRAC:STAT? TR'+i)]
+		return [b'TR'+i for i in b'ABCDEF' if self.query(b'DISP:TRAC:STAT? TR'+i)]
 		
 	def get_trace(self,trace=None):
 		"""Download a trace of data from the unit"""
 		if trace is None:		trace = ""
-		elif len(trace) == 1:	trace = 'TR'+trace
+		elif len(trace) == 1:	trace = b'TR'+trace
 		# create an array for wavelength values
-		npts = self.query('TRAC:POIN? '+trace)
-		start = self.query('TRAC:X:STAR? '+trace)*1e9    # in nm
-		stop = self.query('TRAC:X:STOP? '+trace)*1e9     # in nm
+		npts = self.query(b'TRAC:POIN? '+trace)
+		start = self.query(b'TRAC:X:STAR? '+trace)*1e9    # in nm
+		stop = self.query(b'TRAC:X:STOP? '+trace)*1e9     # in nm
 		X = np.linspace(start,stop,npts)
 		# download the spectrum in binary (fast) format
-		self.write('FORM REAL,32')
-		Y = self.ask_block('TRAC:DATA:Y? '+trace,'>f4')  # NB: big endian data
+		self.write(b'FORM REAL,32')
+		Y = self.ask_block(b'TRAC:DATA:Y? '+trace,'>f4')  # NB: big endian data
 		# return a complete list
 		return np.transpose([X,Y])
 		
 	def get_pcl(self):
 		"""Download a PCL file from the unit **TESTING ONLY**"""
 		# set into PCL output mode
-		self.write('HCOPY:DEV:LANG PCL')
+		self.write(b'HCOPY:DEV:LANG PCL')
 		# make sure it worked
-		assert self.ask('HCOPY:DEV:LANG?') == 'PCL'
+		assert self.ask(b'HCOPY:DEV:LANG?') == b'PCL'
 		# request the data
-		self.write('HCOPY:DATA?')
+		self.write(b'HCOPY:DATA?')
 		# it needs some time to generate the file before it outputs
 		time.sleep(3)
 		# response is an INDEFINITE length binary block reponse
 		if self.bstream:	# we're using a bridge, this is a problem
 			# check the response is of the right form
-			assert self.read_raw(2) == '#0', 'Expected indefinite block response'
+			assert self.read_raw(2) == b'#0', 'Expected indefinite block response'
 			# accumulate data until we stop getting fed it
-			data = ''
+			data = b''
 			while self.dev.has_reply(timeout=1):
 				data = data + self.dev.read()
 		else:				# we're using VISA so we have a real EOI flag
 			# read raw data until EOI
 			data = self.dev.read_raw()
 			# check header
-			assert data[:2] == '#0', 'Expected indefinite block response'
+			assert data[:2] == b'#0', 'Expected indefinite block response'
 			# return the rest
 			data = data[2:]
 		# there's a newline at the end that's unnecessary
@@ -76,14 +76,14 @@ if __name__ == '__main__':
 	print 'Device ID:',id
 
 	# query information about run
-	bw = dev.ask('SENS:BAND:RES?')          # get RBW
-	ref = dev.ask('DISP:TRAC:Y:RLEV?')      # reference level
-	sens = dev.ask('POW:DC:RANG:LOW?')      # sensitivity
-	units = dev.ask('UNIT:POW?')            # unit of y-axis
+	bw = dev.ask(b'SENS:BAND:RES?')          # get RBW
+	ref = dev.ask(b'DISP:TRAC:Y:RLEV?')      # reference level
+	sens = dev.ask(b'POW:DC:RANG:LOW?')      # sensitivity
+	units = dev.ask(b'UNIT:POW?')            # unit of y-axis
 
 	# are we averaging?
-	if dev.query('CALC:AVER:STAT?'):
-		navg = dev.query('CALC:AVER:COUN?')
+	if dev.query(b'CALC:AVER:STAT?'):
+		navg = dev.query(b'CALC:AVER:COUN?')
 	else:
 		navg = 0
 

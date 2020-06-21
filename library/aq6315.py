@@ -19,12 +19,12 @@ import numpy as np
 bridge = PrologixInterface(gpib=1,host=177,timeout=0.5)
 dev = TelepythicDevice(bridge)
 # confirm device identity
-id = dev.id(expect='ANDO,AQ6315')
+id = dev.id(expect=b'ANDO,AQ6315')
 print 'Device ID:',id
 
-res = dev.query('RESLN?')   # resolution
-ref = dev.query('REFL?')    # reference level
-npts = dev.query('SEGP?')   # number of points in sweep
+res = dev.query(b'RESLN?')   # resolution
+ref = dev.query(b'REFL?')    # reference level
+npts = dev.query(b'SEGP?')   # number of points in sweep
 expectedlen = 12*npts+8     # estimate size of trace (ASCII format)
 
 def get_trace(cmd):
@@ -40,12 +40,12 @@ def get_trace(cmd):
 import pylab
 pylab.clf()
 res = {}
-for t in 'ABC':                             # device has 3 traces
-    if dev.ask('DSP%s?'%t):                 # if the trace is visible
+for t in b'ABC':                            # device has 3 traces
+    if dev.ask(b'DSP%s?'%t):                # if the trace is visible
         print 'Reading Trace',t             # download this trace
-        res[t+'V'] = get_trace('LDAT'+t)    # download measurement values (Y)
-        res[t+'L'] = get_trace('WDAT'+t)    # download wavelength values (X)
-        pylab.plot(res[t+'L'],res[t+'V'])   # plot results
+        res[t+b'V'] = get_trace(b'LDAT'+t)  # download measurement values (Y)
+        res[t+b'L'] = get_trace(b'WDAT'+t)  # download wavelength values (X)
+        pylab.plot(res[t+b'L'],res[t+b'V']) # plot results
 
 # close connection to prologix
 dev.close()

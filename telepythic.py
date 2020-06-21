@@ -57,8 +57,10 @@ class TelepythicDevice:
     
     def id(self,expect=None,match_case=True):
         """Return the response to the *IDN? query. To ensure you're communicating with the device you expect, specify an "expect" string which is matched against the _start_ of the IDN response"""
-        id = self.ask('*IDN?')
+        id = self.ask(b'*IDN?')
         if expect is not None:
+            if hasattr(expect,'encode'):    # we SHOULDN'T be passed unicode, but we might be
+                expect = expect.encode()
             if not match_case:
                 id = id.upper()
                 expect = expect.upper()
@@ -84,8 +86,8 @@ class TelepythicDevice:
             # Hence we must read the *entire* raw response in, then parse it in sections.
             data = self.read_raw(None)
             head = data[:2]
-            assert head[0] == '#', 'Not a binary block array'
-            hlen = int(data[1])
+            assert head[:1] == b'#', 'Not a binary block array'
+            hlen = int(data[1:2])
             assert hlen > 0, 'Indefinite blocks not supported'
             dlen = int(data[2:2+hlen])
             assert len(data) - (2+hlen+dlen) <= 2, 'Invalid block length'
@@ -93,8 +95,8 @@ class TelepythicDevice:
         else:
             # We don't know in advance how long the response is so consume piece by piece
             head = self.read_raw(2)
-            assert head[0] == '#', 'Not a binary block array'
-            hlen = int(head[1])
+            assert head[:1] == b'#', 'Not a binary block array'
+            hlen = int(head[1:2])
             assert hlen > 0, 'Indefinite blocks not supported'
             dlen = self.read_raw(hlen)
             assert len(dlen) == hlen, 'Comms fail during read_block'
@@ -123,7 +125,7 @@ class TelepythicDevice:
         try:
             self.dev.write(query)
             if size is None:
-                return self.dev.read().strip()
+                return self.dev.read()
             else:
                 return self.dev.read_raw(size)
         except Exception as e:
@@ -139,9 +141,11 @@ class TelepythicDevice:
     
     def query(self, query):
         """A helper function that asks "query" and returns the response. "query" can be a vector, in which case a dictionary of responses is returned."""
-        if isinstance(query,str):
+        if hasattr(query,encode):   # we SHOULDN'T be passed a unicode string, but we might be
+            query = query.encode()
+        if isinstance(query,bytes):
             # ensure query string contains a query
-            if not '?' in query: query = query + '?'
+            if not b'?' in query: query = query + b'?'
             return self.parse_reply(self.ask(query))
         else:
             return { q: self.query(q) for q in query }

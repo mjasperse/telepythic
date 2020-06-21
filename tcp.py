@@ -8,7 +8,7 @@ from .telepythic import ConnectionError
 
 class TCPInterface:
     _protocol = 'TCP'
-    def __init__(self, host, port, timeout=1, eom='\r\n', trim=True, buffer=1024):
+    def __init__(self, host, port, timeout=1, eom=b'\r\n', trim=True, buffer=1024):
         """
         Connect to the specified TCP device
         
@@ -97,7 +97,7 @@ class TCPInterface:
 import re
 class TelnetInterface(TCPInterface):
     _protocol = 'Telnet'
-    def __init__(self, host, port=23, timeout=1, eom='\n', prompt='> ', initial=None):
+    def __init__(self, host, port=23, timeout=1, eom=b'\n', prompt=b'> ', initial=None):
         """
         Create a Telnet-style connection to the specified device. Telnet connections are TCP connections where the device emits a ready-for-input string ("prompt") that needs to be removed from responses.
         
@@ -106,11 +106,11 @@ class TelnetInterface(TCPInterface):
         TCPInterface.__init__(self,host,port,timeout=timeout,eom=eom,trim=False)
         # compile a regex that looks for any number of prompt strings
         if hasattr(prompt,'__iter__'):
-            prompt = '(' + '|'.join([re.escape(s) for s in prompt]) + ')'
+            prompt = b'(' + b'|'.join([re.escape(s) for s in prompt]) + b')'
         else:
             prompt = re.escape(prompt)
-        self.re_end = re.compile(prompt+'$')
-        self.re_multi = re.compile('([\r\n]*'+prompt+')+')
+        self.re_end = re.compile(prompt+b'$')
+        self.re_multi = re.compile(b'([\r\n]*'+prompt+b')+')
         if initial is not None:
             self.write(initial)
         try:

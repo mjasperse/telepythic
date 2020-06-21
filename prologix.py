@@ -20,29 +20,29 @@ class PrologixInterface(TCPInterface):
         eos         -- string to append to signify End-Of-Send, must be one of '\\n', '\\r' or '\\r\\n' (default None)
         """
         # connect to prologix unit (prologix itself requires '\n' eom termination)
-        TCPInterface.__init__(self,host,port,timeout,eom='\n')
+        TCPInterface.__init__(self,host,port,timeout,eom=b'\n')
         # make sure it's what we expect
-        self.write('++ver\n')
-        if not self.read(True).startswith('Prologix GPIB'):
+        self.write(b'++ver\n')
+        if not self.read(True).startswith(b'Prologix GPIB'):
             raise ConnectionError(self,None,'Not a Prologix device')
         
         # set controller mode
-        self.write('++mode 1\n')
+        self.write(b'++mode 1\n')
         # set timeout for reading gpib response (in ms)
-        self.write('++read_tmo_ms %i\n'%int(timeout*1000))
+        self.write(b'++read_tmo_ms %i\n'%int(timeout*1000))
         # set gpib address of device to connect to
-        self.write('++addr %i\n'%gpib)
+        self.write(b'++addr %i\n'%gpib)
         # assert eoi with every write?
-        self.write('++eoi %i\n'%assert_eoi)
+        self.write(b'++eoi %i\n'%assert_eoi)
         # what kind of eos to append?
-        if eos is None or eos == '':    eos = 3
-        elif eos == '\n':               eos = 2
-        elif eos == '\r':               eos = 1
-        elif eos == '\r\n':             eos = 0
+        if eos is None or eos == b'':    eos = 3
+        elif eos == b'\n':               eos = 2
+        elif eos == b'\r':               eos = 1
+        elif eos == b'\r\n':             eos = 0
         elif not eos in (0,1,2,3):      raise ValueError('Unknown EOS mode')
-        self.write('++eos %i\n'%eos)
+        self.write(b'++eos %i\n'%eos)
         # attempt to read after every write?
-        self.write('++auto %i\n'%auto)
+        self.write(b'++auto %i\n'%auto)
         self.auto = auto
         
         # can we serial poll the device?
@@ -62,14 +62,14 @@ class PrologixInterface(TCPInterface):
         To read a response to a Prologix query (starting with "++"), set immediate to True.
         """
         # if we're not in auto mode, need to tell prologix to read
-        if not immediate and not self.auto: self.write('++read eoi\n')
+        if not immediate and not self.auto: self.write(b'++read eoi\n')
         # pull from tcp
         return TCPInterface.read(self)
     
-    def clear(self):            self.write('++clr\n')
-    def lock(self,locked=True): self.write('++llo\n' if locked else '++loc\n')
-    def local(self):            self.write('++loc\n')
-    def reset(self):            self.write('++rst\n')
-    def poll(self):             self.write('++spoll\n'); return int(self.read(True))
-    def srq(self):              self.write('++seq\n'); return int(self.read(True))
+    def clear(self):            self.write(b'++clr\n')
+    def lock(self,locked=True): self.write(b'++llo\n' if locked else b'++loc\n')
+    def local(self):            self.write(b'++loc\n')
+    def reset(self):            self.write(b'++rst\n')
+    def poll(self):             self.write(b'++spoll\n'); return int(self.read(True))
+    def srq(self):              self.write(b'++seq\n'); return int(self.read(True))
 

@@ -18,28 +18,28 @@ bridge = PrologixInterface(gpib=17,host=175,timeout=1)
 # create a generic device instance
 dev = TelepythicDevice(bridge)
 # make sure the device is connect and identifies correctly
-id = dev.id(expect="HEWLETT-PACKARD,4395A")
+id = dev.id(expect=b"HEWLETT-PACKARD,4395A")
 
 # interrogate settings
-opts = dev.query(['MEAS','BW','REFV','FMT','SWPT','SAUNIT','AVER','AVERFACT'])
-assert opts['SWPT'] in ('LINF','LOGF'), 'Unknown sweep mode'
+opts = dev.query([b'MEAS',b'BW',b'REFV',b'FMT',b'SWPT',b'SAUNIT',b'AVER',b'AVERFACT'])
+assert opts[b'SWPT'] in (b'LINF',b'LOGF'), 'Unknown sweep mode'
 
 # download trace
 if BINARY_MODE:
 	# binary mode is fast, but harder to debug
-	dev.write('FORM3')          # 64-bit mode for data
-	if fmt.startswith('SPEC'):  # spectrum analyser (real data)
-		spec = dev.ask_block('OUTPDTRC?','f8')
+	dev.write(b'FORM3')          # 64-bit mode for data
+	if fmt.startswith(b'SPEC'):  # spectrum analyser (real data)
+		spec = dev.ask_block(b'OUTPDTRC?','f8')
 	else:                       # VNA mode (imag part is auxiliary)
-		spec = dev.ask_block('OUTPDTRC?','c16').real
-	dev.write('FORM2')          # 32-bit mode for frequencies
-	freq = dev.read_block('OUTPSWPRM?','f4')
+		spec = dev.ask_block(b'OUTPDTRC?','c16').real
+	dev.write(b'FORM2')          # 32-bit mode for frequencies
+	freq = dev.read_block(b'OUTPSWPRM?','f4')
 else:
 	import numpy as np
-	dev.write('FORM4')  # ASCII mode
-	specdat = dev.ask('OUTPDTRC?')
+	dev.write(b'FORM4')  # ASCII mode
+	specdat = dev.ask(b'OUTPDTRC?')
 	spec = np.fromstring(specdat[1:],sep=',')
-	freqdat = dev.ask('OUTPSWPRM?')
+	freqdat = dev.ask(b'OUTPSWPRM?')
 	freq = np.fromstring(freqdat[1:],sep=',')
 
 # disconnect from device
@@ -51,19 +51,19 @@ if len(sys.argv) > 1:
 		print >> f, id
 		for k,v in opts.items():
 			print >> f, k+',',v
-		print >> f, "\nFreq (Hz),", opts['MEAS']
+		print >> f, "\nFreq (Hz),", opts[b'MEAS']
 		for x, y in zip(freq,spec):
 			print >> f, x, y;
 
 # make a plot
 import pylab
 pylab.clf()
-if opts['SWPT'] == 'LOGF':
+if opts[b'SWPT'] == b'LOGF':
 	pylab.semilogx(freq,spec)
 else:
 	pylab.plot(freq,spec)
 pylab.xlabel('f (Hz)')
-pylab.ylabel(opts['MEAS'])
+pylab.ylabel(opts[b'MEAS'])
 pylab.axis('tight')
 pylab.grid(True)
 pylab.show()
